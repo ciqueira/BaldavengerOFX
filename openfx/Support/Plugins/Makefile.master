@@ -19,7 +19,8 @@ endif
 ifeq ($(UNAME_SYSTEM), Darwin)
 	METALFLAGS = -F/Library/Frameworks -framework Metal -framework OpenGL -framework AppKit
 	CPUFLAGS = -F/Library/Frameworks -framework OpenGL -framework AppKit
-	LINKFLAGS_OR = -bundle -fvisibility=hidden -exported_symbols_list $(PATHTOROOT)/include/osxSymbols
+	LINKFLAGS_OR = -bundle -fvisibility=hidden -exported_symbols_list $(PATHTOROOT)/include/osxSymbols -arch x86_64 -arch arm64
+	CXXFLAGS += -arch x86_64 -arch arm64 -Wno-c++11-narrowing
 	LINKFLAGS = $(LINKFLAGS_OR)
 	ARCH = MacOS
 	OFX_DIR = /Library/OFX/Plugins

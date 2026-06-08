@@ -1,6 +1,6 @@
-#include "../ACESPlugin.h"
+#include "ACESPlugin.h"
 
-#include "../ACES_LIB_CPU.h"
+#include "ACES_LIB_CPU.h"
 
 #include <cstring>
 #include <cmath>
@@ -13,7 +13,7 @@ using std::string;
 #include "ofxsMultiThread.h"
 #include "ofxsProcessing.h"
 #include "ofxsLog.h"
-#include "../exprtk.hpp"
+#include "exprtk.hpp"
 
 #ifdef __APPLE__
 #define kPluginScript "/Library/Application Support/Blackmagic Design/DaVinci Resolve/LUT/ACES_DCTL/"

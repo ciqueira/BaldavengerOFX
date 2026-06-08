@@ -105,7 +105,7 @@ const char* kernelSource =  \
 "RGB.z *= b / 255.0f; \n" \
 "return RGB; \n" \
 "} \n" \
-"device float3 VideoGradeKernelA( float3 RGB, int p_LumaMath, constant int* p_Switch, constant float* p_Scales) { \n" \
+"float3 VideoGradeKernelA( float3 RGB, int p_LumaMath, constant int* p_Switch, constant float* p_Scales) { \n" \
 "float Temp1 = (p_Scales[1] / 100.0f) + 1.0f; \n" \
 "if (p_Scales[0] != 0.0f) { \n" \
 "RGB.x *= exp(p_Scales[0]); \n" \
@@ -215,9 +215,10 @@ const char* kernelSource =  \
 "}} \n" \
 "\n";
 
-std::mutex s_PipelineQueueMutex;
-typedef std::unordered_map<id<MTLCommandQueue>, id<MTLComputePipelineState>> PipelineQueueMap;
-PipelineQueueMap s_PipelineQueueMap;
+#import <objc/runtime.h>
+
+static char kVideoGradeAssociatedKey;
+static std::mutex s_VideoGradeCompileMutex;
 
 void RunMetalKernel(void* p_CmdQ, const float* p_Input, float* p_Output, int p_Width, 
 int p_Height, int p_LumaMath, int* p_Switch, int p_Display, float* p_Scales)
@@ -228,43 +229,47 @@ id<MTLCommandQueue>				queue = static_cast<id<MTLCommandQueue> >(p_CmdQ);
 id<MTLDevice>					device = queue.device;
 id<MTLLibrary>					metalLibrary;
 id<MTLFunction>					kernelFunction;
-id<MTLComputePipelineState>		pipelineState;
-id<MTLComputePipelineState>     _VideoGradeKernel;
+id<MTLComputePipelineState>     _VideoGradeKernel = nil;
 
 NSError* err;
-std::unique_lock<std::mutex> lock(s_PipelineQueueMutex);
 
-const auto it = s_PipelineQueueMap.find(queue);
-if (it == s_PipelineQueueMap.end()) {
-s_PipelineQueueMap[queue] = pipelineState;
-} else {
-pipelineState = it->second;
-}   
-
-MTLCompileOptions* options	=	[MTLCompileOptions new];
-options.fastMathEnabled		=	YES;
-
-if (!(metalLibrary = [device newLibraryWithSource:@(kernelSource) options:options error:&err])) {
-fprintf(stderr, "Failed to load metal library, %s\n", err.localizedDescription.UTF8String);
-return;
+_VideoGradeKernel = objc_getAssociatedObject(device, &kVideoGradeAssociatedKey);
+if (!_VideoGradeKernel) {
+    std::unique_lock<std::mutex> lock(s_VideoGradeCompileMutex);
+    _VideoGradeKernel = objc_getAssociatedObject(device, &kVideoGradeAssociatedKey);
+    if (!_VideoGradeKernel) {
+        MTLCompileOptions* options	=	[MTLCompileOptions new];
+        options.fastMathEnabled		=	YES;
+        
+        if (!(metalLibrary = [device newLibraryWithSource:@(kernelSource) options:options error:&err])) {
+            fprintf(stderr, "Failed to load metal library, %s\n", err.localizedDescription.UTF8String);
+            [options release];
+            return;
+        }
+        [options release];
+        
+        if (!(kernelFunction = [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:VideoGradeKernel]])) {
+            fprintf(stderr, "Failed to retrieve kernel\n");
+            [metalLibrary release];
+            return;
+        }
+        
+        if (!(_VideoGradeKernel = [device newComputePipelineStateWithFunction:kernelFunction error:&err])) {
+            fprintf(stderr, "Unable to compile, %s\n", err.localizedDescription.UTF8String);
+            [metalLibrary release];
+            [kernelFunction release];
+            return;
+        }
+        
+        [metalLibrary release];
+        [kernelFunction release];
+        
+        objc_setAssociatedObject(device, &kVideoGradeAssociatedKey, _VideoGradeKernel, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        #if !__has_feature(objc_arc)
+        [_VideoGradeKernel release];
+        #endif
+    }
 }
-[options release];
-
-if (!(kernelFunction = [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:VideoGradeKernel]])) {
-fprintf(stderr, "Failed to retrieve kernel\n");
-[metalLibrary release];
-return;
-}
-
-if (!(_VideoGradeKernel = [device newComputePipelineStateWithFunction:kernelFunction error:&err])) {
-fprintf(stderr, "Unable to compile, %s\n", err.localizedDescription.UTF8String);
-[metalLibrary release];
-[kernelFunction release];
-return;
-}
-
-[metalLibrary release];
-[kernelFunction release];
 
 id<MTLBuffer> srcDeviceBuf = reinterpret_cast<id<MTLBuffer> >(const_cast<float *>(p_Input));
 id<MTLBuffer> dstDeviceBuf = reinterpret_cast<id<MTLBuffer> >(p_Output);

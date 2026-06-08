@@ -4178,23 +4178,34 @@ const char* kernelSource =  \
 "aces.x = p_Input[index]; \n" \
 "aces.y = p_Input[index + 1]; \n" \
 "aces.z = p_Input[index + 2]; \n" \
+"float Y_MIN = 0.0001f; \n" \
+"float Y_MID = 4.8f; \n" \
+"float Y_MAX = 48.0f; \n" \
+"Chromaticities DISPLAY_PRI = REC709_PRI; \n" \
+"Chromaticities LIMITING_PRI = REC709_PRI; \n" \
+"int EOTF = 1; \n" \
+"int SURROUND = 1; \n" \
+"bool STRETCH_BLACK = false; \n" \
+"bool D60_SIM = false; \n" \
+"bool LEGAL_RANGE = false; \n" \
+"bool isCustomOrRRTODT = false; \n" \
 "switch (p_ODT){ \n" \
 "case 0: \n" \
 "{} \n" \
 "break; \n" \
 "case 1: \n" \
 "{ \n" \
-"float Y_MIN = p_Lum[0] * 0.0001f; \n" \
-"float Y_MID = p_Lum[1]; \n" \
-"float Y_MAX = p_Lum[2]; \n" \
-"Chromaticities DISPLAY_PRI = p_DISPLAY == 0 ? REC2020_PRI : p_DISPLAY == 1 ? P3D60_PRI : p_DISPLAY == 2 ? P3D65_PRI : p_DISPLAY == 3 ? P3DCI_PRI : REC709_PRI; \n" \
-"Chromaticities LIMITING_PRI = p_LIMIT == 0 ? REC2020_PRI : p_LIMIT == 1 ? P3D60_PRI : p_LIMIT == 2 ? P3D65_PRI : p_LIMIT == 3 ? P3DCI_PRI : REC709_PRI; \n" \
-"int EOTF = p_EOTF; \n" \
-"int SURROUND = p_SURROUND; \n" \
-"bool STRETCH_BLACK = p_Switch[0] == 1; \n" \
-"bool D60_SIM = p_Switch[1] == 1; \n" \
-"bool LEGAL_RANGE = p_Switch[2] == 1; \n" \
-"aces = outputTransform( aces, Y_MIN, Y_MID, Y_MAX, DISPLAY_PRI, LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE ); \n" \
+"Y_MIN = p_Lum[0] * 0.0001f; \n" \
+"Y_MID = p_Lum[1]; \n" \
+"Y_MAX = p_Lum[2]; \n" \
+"DISPLAY_PRI = p_DISPLAY == 0 ? REC2020_PRI : p_DISPLAY == 1 ? P3D60_PRI : p_DISPLAY == 2 ? P3D65_PRI : p_DISPLAY == 3 ? P3DCI_PRI : REC709_PRI; \n" \
+"LIMITING_PRI = p_LIMIT == 0 ? REC2020_PRI : p_LIMIT == 1 ? P3D60_PRI : p_LIMIT == 2 ? P3D65_PRI : p_LIMIT == 3 ? P3DCI_PRI : REC709_PRI; \n" \
+"EOTF = p_EOTF; \n" \
+"SURROUND = p_SURROUND; \n" \
+"STRETCH_BLACK = p_Switch[0] == 1; \n" \
+"D60_SIM = p_Switch[1] == 1; \n" \
+"LEGAL_RANGE = p_Switch[2] == 1; \n" \
+"isCustomOrRRTODT = true; \n" \
 "} \n" \
 "break; \n" \
 "case 2: \n" \
@@ -4258,34 +4269,38 @@ const char* kernelSource =  \
 "{aces = ODT_RGBmonitor_D60sim_100nits_dim(aces);} \n" \
 "break; \n" \
 "case 22: \n" \
-"{aces = RRTODT_Rec709_100nits_10nits_BT1886(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 10.0f; Y_MAX = 100.0f; DISPLAY_PRI = REC709_PRI; LIMITING_PRI = REC709_PRI; EOTF = 1; SURROUND = 1; STRETCH_BLACK = false; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 23: \n" \
-"{aces = RRTODT_Rec709_100nits_10nits_sRGB(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 10.0f; Y_MAX = 100.0f; DISPLAY_PRI = REC709_PRI; LIMITING_PRI = REC709_PRI; EOTF = 2; SURROUND = 1; STRETCH_BLACK = false; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 24: \n" \
-"{aces = RRTODT_P3D65_108nits_7_2nits_ST2084(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 7.2f; Y_MAX = 108.0f; DISPLAY_PRI = P3D65_PRI; LIMITING_PRI = P3D65_PRI; EOTF = 0; SURROUND = 1; STRETCH_BLACK = true; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 25: \n" \
-"{aces = RRTODT_P3D65_1000nits_15nits_ST2084(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 15.0f; Y_MAX = 1000.0f; DISPLAY_PRI = P3D65_PRI; LIMITING_PRI = P3D65_PRI; EOTF = 0; SURROUND = 1; STRETCH_BLACK = true; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 26: \n" \
-"{aces = RRTODT_P3D65_2000nits_15nits_ST2084(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 15.0f; Y_MAX = 2000.0f; DISPLAY_PRI = P3D65_PRI; LIMITING_PRI = P3D65_PRI; EOTF = 0; SURROUND = 1; STRETCH_BLACK = true; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 27: \n" \
-"{aces = RRTODT_P3D65_4000nits_15nits_ST2084(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 15.0f; Y_MAX = 4000.0f; DISPLAY_PRI = P3D65_PRI; LIMITING_PRI = P3D65_PRI; EOTF = 0; SURROUND = 1; STRETCH_BLACK = true; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 28: \n" \
-"{aces = RRTODT_Rec2020_1000nits_15nits_HLG(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 15.0f; Y_MAX = 1000.0f; DISPLAY_PRI = REC2020_PRI; LIMITING_PRI = REC2020_PRI; EOTF = 5; SURROUND = 1; STRETCH_BLACK = true; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 29: \n" \
-"{aces = RRTODT_Rec2020_1000nits_15nits_ST2084(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 15.0f; Y_MAX = 1000.0f; DISPLAY_PRI = REC2020_PRI; LIMITING_PRI = REC2020_PRI; EOTF = 0; SURROUND = 1; STRETCH_BLACK = true; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 30: \n" \
-"{aces = RRTODT_Rec2020_2000nits_15nits_ST2084(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 15.0f; Y_MAX = 2000.0f; DISPLAY_PRI = REC2020_PRI; LIMITING_PRI = REC2020_PRI; EOTF = 0; SURROUND = 1; STRETCH_BLACK = true; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 31: \n" \
-"{aces = RRTODT_Rec2020_4000nits_15nits_ST2084(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 15.0f; Y_MAX = 4000.0f; DISPLAY_PRI = REC2020_PRI; LIMITING_PRI = REC2020_PRI; EOTF = 0; SURROUND = 1; STRETCH_BLACK = true; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
+"break; \n" \
+"} \n" \
+"if (isCustomOrRRTODT) { \n" \
+"aces = outputTransform( aces, Y_MIN, Y_MID, Y_MAX, DISPLAY_PRI, LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE ); \n" \
 "} \n" \
 "p_Input[index] = aces.x;  \n" \
 "p_Input[index + 1] = aces.y; \n" \
@@ -4301,23 +4316,34 @@ const char* kernelSource =  \
 "aces.x = p_Input[index]; \n" \
 "aces.y = p_Input[index + 1]; \n" \
 "aces.z = p_Input[index + 2]; \n" \
+"float Y_MIN = 0.0001f; \n" \
+"float Y_MID = 4.8f; \n" \
+"float Y_MAX = 100.0f; \n" \
+"Chromaticities DISPLAY_PRI = REC709_PRI; \n" \
+"Chromaticities LIMITING_PRI = REC709_PRI; \n" \
+"int EOTF = 1; \n" \
+"int SURROUND = 1; \n" \
+"bool STRETCH_BLACK = false; \n" \
+"bool D60_SIM = false; \n" \
+"bool LEGAL_RANGE = false; \n" \
+"bool isCustomOrRRTODT = false; \n" \
 "switch (p_InvODT){ \n" \
 "case 0: \n" \
 "{} \n" \
 "break; \n" \
 "case 1: \n" \
 "{ \n" \
-"float Y_MIN = p_Lum[0] * 0.0001f; \n" \
-"float Y_MID = p_Lum[1]; \n" \
-"float Y_MAX = p_Lum[2]; \n" \
-"Chromaticities DISPLAY_PRI = p_DISPLAY == 0 ? REC2020_PRI : p_DISPLAY == 1 ? P3D60_PRI : p_DISPLAY == 2 ? P3D65_PRI : p_DISPLAY == 3 ? P3DCI_PRI : REC709_PRI; \n" \
-"Chromaticities LIMITING_PRI = p_LIMIT == 0 ? REC2020_PRI : p_LIMIT == 1 ? P3D60_PRI : p_LIMIT == 2 ? P3D65_PRI : p_LIMIT == 3 ? P3DCI_PRI : REC709_PRI; \n" \
-"int EOTF = p_EOTF; \n" \
-"int SURROUND = p_SURROUND; \n" \
-"bool STRETCH_BLACK = p_Switch[0] == 1; \n" \
-"bool D60_SIM = p_Switch[1] == 1; \n" \
-"bool LEGAL_RANGE = p_Switch[2] == 1; \n" \
-"aces = invOutputTransform( aces, Y_MIN, Y_MID, Y_MAX, DISPLAY_PRI, LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE ); \n" \
+"Y_MIN = p_Lum[0] * 0.0001f; \n" \
+"Y_MID = p_Lum[1]; \n" \
+"Y_MAX = p_Lum[2]; \n" \
+"DISPLAY_PRI = p_DISPLAY == 0 ? REC2020_PRI : p_DISPLAY == 1 ? P3D60_PRI : p_DISPLAY == 2 ? P3D65_PRI : p_DISPLAY == 3 ? P3DCI_PRI : REC709_PRI; \n" \
+"LIMITING_PRI = p_LIMIT == 0 ? REC2020_PRI : p_LIMIT == 1 ? P3D60_PRI : p_LIMIT == 2 ? P3D65_PRI : p_LIMIT == 3 ? P3DCI_PRI : REC709_PRI; \n" \
+"EOTF = p_EOTF; \n" \
+"SURROUND = p_SURROUND; \n" \
+"STRETCH_BLACK = p_Switch[0] == 1; \n" \
+"D60_SIM = p_Switch[1] == 1; \n" \
+"LEGAL_RANGE = p_Switch[2] == 1; \n" \
+"isCustomOrRRTODT = true; \n" \
 "} \n" \
 "break; \n" \
 "case 2: \n" \
@@ -4369,34 +4395,38 @@ const char* kernelSource =  \
 "{aces = InvODT_RGBmonitor_D60sim_100nits_dim(aces);} \n" \
 "break; \n" \
 "case 18: \n" \
-"{aces = InvRRTODT_Rec709_100nits_10nits_BT1886(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 10.0f; Y_MAX = 100.0f; DISPLAY_PRI = REC709_PRI; LIMITING_PRI = REC709_PRI; EOTF = 1; SURROUND = 1; STRETCH_BLACK = false; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 19: \n" \
-"{aces = InvRRTODT_Rec709_100nits_10nits_sRGB(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 10.0f; Y_MAX = 100.0f; DISPLAY_PRI = REC709_PRI; LIMITING_PRI = REC709_PRI; EOTF = 2; SURROUND = 1; STRETCH_BLACK = false; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 20: \n" \
-"{aces = InvRRTODT_P3D65_108nits_7_2nits_ST2084(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 7.2f; Y_MAX = 108.0f; DISPLAY_PRI = P3D65_PRI; LIMITING_PRI = P3D65_PRI; EOTF = 0; SURROUND = 1; STRETCH_BLACK = true; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 21: \n" \
-"{aces = InvRRTODT_P3D65_1000nits_15nits_ST2084(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 15.0f; Y_MAX = 1000.0f; DISPLAY_PRI = P3D65_PRI; LIMITING_PRI = P3D65_PRI; EOTF = 0; SURROUND = 1; STRETCH_BLACK = true; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 22: \n" \
-"{aces = InvRRTODT_P3D65_2000nits_15nits_ST2084(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 15.0f; Y_MAX = 2000.0f; DISPLAY_PRI = P3D65_PRI; LIMITING_PRI = P3D65_PRI; EOTF = 0; SURROUND = 1; STRETCH_BLACK = true; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 23: \n" \
-"{aces = InvRRTODT_P3D65_4000nits_15nits_ST2084(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 15.0f; Y_MAX = 4000.0f; DISPLAY_PRI = P3D65_PRI; LIMITING_PRI = P3D65_PRI; EOTF = 0; SURROUND = 1; STRETCH_BLACK = true; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 24: \n" \
-"{aces = InvRRTODT_Rec2020_1000nits_15nits_HLG(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 15.0f; Y_MAX = 1000.0f; DISPLAY_PRI = REC2020_PRI; LIMITING_PRI = REC2020_PRI; EOTF = 5; SURROUND = 1; STRETCH_BLACK = true; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 25: \n" \
-"{aces = InvRRTODT_Rec2020_1000nits_15nits_ST2084(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 15.0f; Y_MAX = 1000.0f; DISPLAY_PRI = REC2020_PRI; LIMITING_PRI = REC2020_PRI; EOTF = 0; SURROUND = 1; STRETCH_BLACK = true; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 26: \n" \
-"{aces = InvRRTODT_Rec2020_2000nits_15nits_ST2084(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 15.0f; Y_MAX = 2000.0f; DISPLAY_PRI = REC2020_PRI; LIMITING_PRI = REC2020_PRI; EOTF = 0; SURROUND = 1; STRETCH_BLACK = true; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
 "break; \n" \
 "case 27: \n" \
-"{aces = InvRRTODT_Rec2020_4000nits_15nits_ST2084(aces);} \n" \
+"{ Y_MIN = 0.0001f; Y_MID = 15.0f; Y_MAX = 4000.0f; DISPLAY_PRI = REC2020_PRI; LIMITING_PRI = REC2020_PRI; EOTF = 0; SURROUND = 1; STRETCH_BLACK = true; D60_SIM = false; LEGAL_RANGE = false; isCustomOrRRTODT = true; } \n" \
+"break; \n" \
+"} \n" \
+"if (isCustomOrRRTODT) { \n" \
+"aces = invOutputTransform( aces, Y_MIN, Y_MID, Y_MAX, DISPLAY_PRI, LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE ); \n" \
 "} \n" \
 "p_Input[index] = aces.x;  \n" \
 "p_Input[index + 1] = aces.y; \n" \
@@ -4404,9 +4434,41 @@ const char* kernelSource =  \
 "}} \n" \
 "\n";
 
-std::mutex s_PipelineQueueMutex;
-typedef std::unordered_map<id<MTLCommandQueue>, id<MTLComputePipelineState>> PipelineQueueMap;
-PipelineQueueMap s_PipelineQueueMap;
+#import <objc/runtime.h>
+
+@interface ACESPipelines : NSObject
+@property (nonatomic, retain) id<MTLComputePipelineState> Simple;
+@property (nonatomic, retain) id<MTLComputePipelineState> CSCIN;
+@property (nonatomic, retain) id<MTLComputePipelineState> IDT;
+@property (nonatomic, retain) id<MTLComputePipelineState> Exposure;
+@property (nonatomic, retain) id<MTLComputePipelineState> LMT;
+@property (nonatomic, retain) id<MTLComputePipelineState> CSCOUT;
+@property (nonatomic, retain) id<MTLComputePipelineState> RRT;
+@property (nonatomic, retain) id<MTLComputePipelineState> InvRRT;
+@property (nonatomic, retain) id<MTLComputePipelineState> ODT;
+@property (nonatomic, retain) id<MTLComputePipelineState> InvODT;
+@end
+
+@implementation ACESPipelines
+#if !__has_feature(objc_arc)
+- (void)dealloc {
+    [_Simple release];
+    [_CSCIN release];
+    [_IDT release];
+    [_Exposure release];
+    [_LMT release];
+    [_CSCOUT release];
+    [_RRT release];
+    [_InvRRT release];
+    [_ODT release];
+    [_InvODT release];
+    [super dealloc];
+}
+#endif
+@end
+
+static char kACESAssociatedKey;
+static std::mutex s_ACESCompileMutex;
 
 void RunMetalKernel(void* p_CmdQ, const float* p_Input, float* p_Output, int p_Width, int p_Height, 
 int p_Direction, int p_CSCIN, int p_IDT, int p_LMT, int p_CSCOUT, int p_RRT, int p_InvRRT, 
@@ -4427,169 +4489,98 @@ id<MTLCommandQueue>            	queue = static_cast<id<MTLCommandQueue> >(p_CmdQ
 id<MTLDevice>                  	device = queue.device;
 id<MTLLibrary>                 	metalLibrary;
 id<MTLFunction>                	kernelFunction;
-id<MTLComputePipelineState>    	pipelineState;
-id<MTLComputePipelineState>     _Simple;
-id<MTLComputePipelineState>     _CSCIN;
-id<MTLComputePipelineState>     _IDT;
-id<MTLComputePipelineState>     _Exposure;
-id<MTLComputePipelineState>     _LMT;
-id<MTLComputePipelineState>     _CSCOUT;
-id<MTLComputePipelineState>     _RRT;
-id<MTLComputePipelineState>     _InvRRT;
-id<MTLComputePipelineState>     _ODT;
-id<MTLComputePipelineState>     _InvODT;
+id<MTLComputePipelineState>     _Simple = nil;
+id<MTLComputePipelineState>     _CSCIN = nil;
+id<MTLComputePipelineState>     _IDT = nil;
+id<MTLComputePipelineState>     _Exposure = nil;
+id<MTLComputePipelineState>     _LMT = nil;
+id<MTLComputePipelineState>     _CSCOUT = nil;
+id<MTLComputePipelineState>     _RRT = nil;
+id<MTLComputePipelineState>     _InvRRT = nil;
+id<MTLComputePipelineState>     _ODT = nil;
+id<MTLComputePipelineState>     _InvODT = nil;
 
 NSError* err;
-std::unique_lock<std::mutex> lock(s_PipelineQueueMutex);
 
-const auto it = s_PipelineQueueMap.find(queue);
-if (it == s_PipelineQueueMap.end()) {
-s_PipelineQueueMap[queue] = pipelineState;
-} else {
-pipelineState = it->second;
+ACESPipelines* pipes = objc_getAssociatedObject(device, &kACESAssociatedKey);
+if (!pipes) {
+    std::unique_lock<std::mutex> lock(s_ACESCompileMutex);
+    pipes = objc_getAssociatedObject(device, &kACESAssociatedKey);
+    if (!pipes) {
+        pipes = [[ACESPipelines alloc] init];
+        
+        MTLCompileOptions* options	=	[MTLCompileOptions new];
+        options.fastMathEnabled		=	YES;
+        
+        if (!(metalLibrary = [device newLibraryWithSource:@(kernelSource) options:options error:&err])) {
+            fprintf(stderr, "Failed to load metal library, %s\n", err.localizedDescription.UTF8String);
+            [options release];
+            #if !__has_feature(objc_arc)
+            [pipes release];
+            #endif
+            return;
+        }
+        [options release];
+        
+        kernelFunction = [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:Simple]];
+        pipes.Simple = [device newComputePipelineStateWithFunction:kernelFunction error:&err];
+        [kernelFunction release];
+        
+        kernelFunction = [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:CSCIN]];
+        pipes.CSCIN = [device newComputePipelineStateWithFunction:kernelFunction error:&err];
+        [kernelFunction release];
+        
+        kernelFunction = [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:IDT]];
+        pipes.IDT = [device newComputePipelineStateWithFunction:kernelFunction error:&err];
+        [kernelFunction release];
+        
+        kernelFunction = [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:Exposure]];
+        pipes.Exposure = [device newComputePipelineStateWithFunction:kernelFunction error:&err];
+        [kernelFunction release];
+        
+        kernelFunction = [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:LMT]];
+        pipes.LMT = [device newComputePipelineStateWithFunction:kernelFunction error:&err];
+        [kernelFunction release];
+        
+        kernelFunction = [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:CSCOUT]];
+        pipes.CSCOUT = [device newComputePipelineStateWithFunction:kernelFunction error:&err];
+        [kernelFunction release];
+        
+        kernelFunction = [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:RRT]];
+        pipes.RRT = [device newComputePipelineStateWithFunction:kernelFunction error:&err];
+        [kernelFunction release];
+        
+        kernelFunction = [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:InvRRT]];
+        pipes.InvRRT = [device newComputePipelineStateWithFunction:kernelFunction error:&err];
+        [kernelFunction release];
+        
+        kernelFunction = [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:ODT]];
+        pipes.ODT = [device newComputePipelineStateWithFunction:kernelFunction error:&err];
+        [kernelFunction release];
+        
+        kernelFunction = [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:InvODT]];
+        pipes.InvODT = [device newComputePipelineStateWithFunction:kernelFunction error:&err];
+        [kernelFunction release];
+        
+        [metalLibrary release];
+        
+        objc_setAssociatedObject(device, &kACESAssociatedKey, pipes, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        #if !__has_feature(objc_arc)
+        [pipes release];
+        #endif
+    }
 }
 
-MTLCompileOptions* options	=	[MTLCompileOptions new];
-options.fastMathEnabled		=	YES;
-
-if (!(metalLibrary    		= [device newLibraryWithSource:@(kernelSource) options:options error:&err])) {
-fprintf(stderr, "Failed to load metal library, %s\n", err.localizedDescription.UTF8String);
-return;
-}
-[options release];
-
-if (!(kernelFunction  		= [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:Simple]])) {
-fprintf(stderr, "Failed to retrieve kernel\n");
-[metalLibrary release];
-return;
-}
-
-if (!(_Simple   			= [device newComputePipelineStateWithFunction:kernelFunction error:&err])) {
-fprintf(stderr, "Unable to compile, %s\n", err.localizedDescription.UTF8String);
-[metalLibrary release];
-[kernelFunction release];
-return;
-}
-
-if (!(kernelFunction  		= [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:CSCIN]])) {
-fprintf(stderr, "Failed to retrieve kernel\n");
-[metalLibrary release];
-return;
-}
-
-if (!(_CSCIN	   			= [device newComputePipelineStateWithFunction:kernelFunction error:&err])) {
-fprintf(stderr, "Unable to compile, %s\n", err.localizedDescription.UTF8String);
-[metalLibrary release];
-[kernelFunction release];
-return;
-}
-
-if (!(kernelFunction  		= [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:IDT]])) {
-fprintf(stderr, "Failed to retrieve kernel\n");
-[metalLibrary release];
-return;
-}
-
-if (!(_IDT   				= [device newComputePipelineStateWithFunction:kernelFunction error:&err])) {
-fprintf(stderr, "Unable to compile, %s\n", err.localizedDescription.UTF8String);
-[metalLibrary release];
-[kernelFunction release];
-return;
-}
-
-if (!(kernelFunction  		= [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:Exposure]])) {
-fprintf(stderr, "Failed to retrieve kernel\n");
-[metalLibrary release];
-return;
-}
-
-if (!(_Exposure   			= [device newComputePipelineStateWithFunction:kernelFunction error:&err])) {
-fprintf(stderr, "Unable to compile, %s\n", err.localizedDescription.UTF8String);
-[metalLibrary release];
-[kernelFunction release];
-return;
-}
-
-if (!(kernelFunction  		= [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:LMT]])) {
-fprintf(stderr, "Failed to retrieve kernel\n");
-[metalLibrary release];
-return;
-}
-
-if (!(_LMT   				= [device newComputePipelineStateWithFunction:kernelFunction error:&err])) {
-fprintf(stderr, "Unable to compile, %s\n", err.localizedDescription.UTF8String);
-[metalLibrary release];
-[kernelFunction release];
-return;
-}
-
-if (!(kernelFunction  		= [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:CSCOUT]])) {
-fprintf(stderr, "Failed to retrieve kernel\n");
-[metalLibrary release];
-return;
-}
-
-if (!(_CSCOUT   			= [device newComputePipelineStateWithFunction:kernelFunction error:&err])) {
-fprintf(stderr, "Unable to compile, %s\n", err.localizedDescription.UTF8String);
-[metalLibrary release];
-[kernelFunction release];
-return;
-}
-
-if (!(kernelFunction  		= [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:RRT]])) {
-fprintf(stderr, "Failed to retrieve kernel\n");
-[metalLibrary release];
-return;
-}
-
-if (!(_RRT   				= [device newComputePipelineStateWithFunction:kernelFunction error:&err])) {
-fprintf(stderr, "Unable to compile, %s\n", err.localizedDescription.UTF8String);
-[metalLibrary release];
-[kernelFunction release];
-return;
-}
-
-if (!(kernelFunction  		= [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:InvRRT]])) {
-fprintf(stderr, "Failed to retrieve kernel\n");
-[metalLibrary release];
-return;
-}
-
-if (!(_InvRRT   			= [device newComputePipelineStateWithFunction:kernelFunction error:&err])) {
-fprintf(stderr, "Unable to compile, %s\n", err.localizedDescription.UTF8String);
-[metalLibrary release];
-[kernelFunction release];
-return;
-}
-
-if (!(kernelFunction  		= [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:ODT]])) {
-fprintf(stderr, "Failed to retrieve kernel\n");
-[metalLibrary release];
-return;
-}
-
-if (!(_ODT   				= [device newComputePipelineStateWithFunction:kernelFunction error:&err])) {
-fprintf(stderr, "Unable to compile, %s\n", err.localizedDescription.UTF8String);
-[metalLibrary release];
-[kernelFunction release];
-return;
-}
-
-if (!(kernelFunction  		= [metalLibrary newFunctionWithName:[NSString stringWithUTF8String:InvODT]])) {
-fprintf(stderr, "Failed to retrieve kernel\n");
-[metalLibrary release];
-return;
-}
-
-if (!(_InvODT   			= [device newComputePipelineStateWithFunction:kernelFunction error:&err])) {
-fprintf(stderr, "Unable to compile, %s\n", err.localizedDescription.UTF8String);
-[metalLibrary release];
-[kernelFunction release];
-return;
-}
-
-[metalLibrary release];
-[kernelFunction release];
+_Simple = pipes.Simple;
+_CSCIN = pipes.CSCIN;
+_IDT = pipes.IDT;
+_Exposure = pipes.Exposure;
+_LMT = pipes.LMT;
+_CSCOUT = pipes.CSCOUT;
+_RRT = pipes.RRT;
+_InvRRT = pipes.InvRRT;
+_ODT = pipes.ODT;
+_InvODT = pipes.InvODT;
 
 id<MTLBuffer> srcDeviceBuf = reinterpret_cast<id<MTLBuffer> >(const_cast<float *>(p_Input));
 id<MTLBuffer> dstDeviceBuf = reinterpret_cast<id<MTLBuffer> >(p_Output);
