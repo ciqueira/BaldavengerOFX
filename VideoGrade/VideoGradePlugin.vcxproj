@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Release|x64">
@@ -59,7 +59,7 @@
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
       <Command>if not exist "$(OutDir)VideoGrade.ofx.bundle\Contents\Resources" mkdir "$(OutDir)VideoGrade.ofx.bundle\Contents\Resources"
-      copy "(OutDir)..\..\BaldavengerOFX.VideoGrade.png" "$(OutDir)VideoGrade.ofx.bundle\Contents\Resources"
+      copy "$(OutDir)..\..\BaldavengerOFX.VideoGrade.png" "$(OutDir)VideoGrade.ofx.bundle\Contents\Resources"
 	  if not exist "$(OutDir)VideoGrade.ofx.bundle\Contents\Win64" mkdir "$(OutDir)VideoGrade.ofx.bundle\Contents\Win64"
 	  copy /Y "$(TargetPath)" /B "$(OutDir)VideoGrade.ofx.bundle\Contents\Win64\VideoGrade.ofx" /B
 </Command>
