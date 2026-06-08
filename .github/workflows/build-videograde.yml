@@ -75,7 +75,7 @@ jobs:
         with:
           cuda: '12.4.1'
           method: 'network'
-          sub-packages: '["nvcc", "cudart", "visual_studio_integration"]'
+          sub-packages: '["nvcc", "cudart", "opencl", "visual_studio_integration"]'
 
       - name: Configure CUDA Version in Project File
         shell: pwsh
