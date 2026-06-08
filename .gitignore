@@ -1,1 +1,12 @@
 .DS_Store
+
+
+*.o
+*.obj
+*.air
+*.metallib
+*.ofx
+*.ofx.bundle/
+
+BaldavengerOFX/BaldavengerPluginsCPU_DR17/
+BaldavengerOFX/BaldavengerPluginsMETAL_DR17/
