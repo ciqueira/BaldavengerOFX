@@ -1,7 +1,11 @@
 # BaldavengerOFX
 Source files of BaldavengerOFX plugins
 
+Only OFX VideoGrade is available.
 
+## Installation
+
+The plugin is currently distributed and updated through the **[Nexus](https://github.com/ciqueira/MCNexus)** ecosystem, supporting seamless license activation, version switching, and multi-platform deployment (Windows & macOS).
 
 ## 🔑 Get Your Free Baldavenger Plugins License
 
