@@ -75,6 +75,32 @@ jobs:
           method: 'network'
           sub-packages: '["nvcc", "cudart", "opencl", "visual_studio_integration"]'
 
+      - name: Install CUDA MSBuild Integration
+        shell: pwsh
+        run: |
+          $cudaMsbuild = Join-Path $env:CUDA_PATH 'extras\visual_studio_integration\MSBuildExtensions'
+          if (!(Test-Path $cudaMsbuild)) {
+            Write-Error "CUDA MSBuild extensions not found at $cudaMsbuild"
+          }
+
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $vsInstall = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (!$vsInstall) {
+            Write-Error 'Visual Studio installation with VC tools was not found.'
+          }
+
+          $vcMsbuildRoot = Join-Path $vsInstall 'MSBuild\Microsoft\VC'
+          $buildCustomizations = Get-ChildItem $vcMsbuildRoot -Directory |
+            Sort-Object Name -Descending |
+            Select-Object -First 1 |
+            ForEach-Object { Join-Path $_.FullName 'BuildCustomizations' }
+
+          New-Item -ItemType Directory -Force -Path $buildCustomizations | Out-Null
+          Copy-Item (Join-Path $cudaMsbuild 'CUDA 12.4.props') $buildCustomizations -Force
+          Copy-Item (Join-Path $cudaMsbuild 'CUDA 12.4.targets') $buildCustomizations -Force
+          Copy-Item (Join-Path $cudaMsbuild 'CUDA 12.4.xml') $buildCustomizations -Force
+          Copy-Item (Join-Path $cudaMsbuild 'Nvda.Build.CudaTasks.v12.4.dll') $buildCustomizations -Force
+
       - name: Configure CUDA Version in Project File
         shell: pwsh
         run: |

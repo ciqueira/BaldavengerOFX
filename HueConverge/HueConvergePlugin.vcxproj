@@ -59,7 +59,7 @@
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
       <Command>if not exist "$(OutDir)HueConverge.ofx.bundle\Contents\Resources" mkdir "$(OutDir)HueConverge.ofx.bundle\Contents\Resources"
-      copy "(OutDir)..\..\BaldavengerOFX.HueConverge.png" "$(OutDir)HueConverge.ofx.bundle\Contents\Resources"
+      copy "$(OutDir)..\..\BaldavengerOFX.HueConverge.png" "$(OutDir)HueConverge.ofx.bundle\Contents\Resources"
 	  if not exist "$(OutDir)HueConverge.ofx.bundle\Contents\Win64" mkdir "$(OutDir)HueConverge.ofx.bundle\Contents\Win64"
 	  copy /Y "$(TargetPath)" /B "$(OutDir)HueConverge.ofx.bundle\Contents\Win64\HueConverge.ofx" /B
 </Command>
