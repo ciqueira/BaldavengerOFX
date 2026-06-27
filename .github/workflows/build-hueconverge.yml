@@ -61,7 +61,7 @@ jobs:
     if: |
       (github.event_name == 'push') ||
       (github.event_name == 'workflow_dispatch' && (github.event.inputs.target == 'both' || github.event.inputs.target == 'windows'))
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
 
@@ -90,16 +90,19 @@ jobs:
           }
 
           $vcMsbuildRoot = Join-Path $vsInstall 'MSBuild\Microsoft\VC'
-          $buildCustomizations = Get-ChildItem $vcMsbuildRoot -Directory |
-            Sort-Object Name -Descending |
-            Select-Object -First 1 |
-            ForEach-Object { Join-Path $_.FullName 'BuildCustomizations' }
+          $vcVersionDirs = Get-ChildItem $vcMsbuildRoot -Directory -Filter 'v*'
+          if (!$vcVersionDirs) {
+            Write-Error "No VC MSBuild version directories found at $vcMsbuildRoot"
+          }
 
-          New-Item -ItemType Directory -Force -Path $buildCustomizations | Out-Null
-          Copy-Item (Join-Path $cudaMsbuild 'CUDA 12.4.props') $buildCustomizations -Force
-          Copy-Item (Join-Path $cudaMsbuild 'CUDA 12.4.targets') $buildCustomizations -Force
-          Copy-Item (Join-Path $cudaMsbuild 'CUDA 12.4.xml') $buildCustomizations -Force
-          Copy-Item (Join-Path $cudaMsbuild 'Nvda.Build.CudaTasks.v12.4.dll') $buildCustomizations -Force
+          foreach ($vcVersionDir in $vcVersionDirs) {
+            $buildCustomizations = Join-Path $vcVersionDir.FullName 'BuildCustomizations'
+            New-Item -ItemType Directory -Force -Path $buildCustomizations | Out-Null
+            Copy-Item (Join-Path $cudaMsbuild 'CUDA 12.4.props') $buildCustomizations -Force
+            Copy-Item (Join-Path $cudaMsbuild 'CUDA 12.4.targets') $buildCustomizations -Force
+            Copy-Item (Join-Path $cudaMsbuild 'CUDA 12.4.xml') $buildCustomizations -Force
+            Copy-Item (Join-Path $cudaMsbuild 'Nvda.Build.CudaTasks.v12.4.dll') $buildCustomizations -Force
+          }
 
       - name: Configure CUDA Version in Project File
         shell: pwsh
