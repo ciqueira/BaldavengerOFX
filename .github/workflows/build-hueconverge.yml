@@ -1,0 +1,185 @@
+name: Build HueConverge
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'HueConverge/VERSION'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Alvo do build'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - windows
+          - macos
+      version:
+        description: 'Versao manual para o release (ex: 1.2.3)'
+        required: false
+        default: ''
+      description:
+        description: 'Descricao do release (opcional)'
+        required: false
+        type: string
+        default: ''
+      prerelease:
+        description: 'Marcar como pre-release (beta)?'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    name: Build macOS
+    if: |
+      (github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.target == 'both' || github.event.inputs.target == 'macos'))
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Plugin
+        run: |
+          cd HueConverge
+          make INSTALL_PLUGIN=FALSE
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HueConverge-macOS
+          path: BaldavengerPluginsMETAL_DR17/HueConverge.macOS.DR17.METAL.ofx.bundle
+
+  build-windows:
+    name: Build Windows
+    if: |
+      (github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.target == 'both' || github.event.inputs.target == 'windows'))
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Set up CUDA
+        uses: Jimver/cuda-toolkit@v0.2.16
+        with:
+          cuda: '12.4.1'
+          method: 'network'
+          sub-packages: '["nvcc", "cudart", "opencl", "visual_studio_integration"]'
+
+      - name: Configure CUDA Version in Project File
+        shell: pwsh
+        run: |
+          (Get-Content HueConverge/HueConvergePlugin.vcxproj) -replace 'CUDA 11.0', 'CUDA 12.4' | Set-Content HueConverge/HueConvergePlugin.vcxproj
+
+      - name: Build Plugin
+        run: |
+          msbuild HueConverge/HueConvergePlugin.sln /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143
+        env:
+          CUDA_INC_PATH: ${{ env.CUDA_PATH }}\include
+          CUDA_LIB_PATH: ${{ env.CUDA_PATH }}\lib\x64
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HueConverge-Windows
+          path: HueConverge/x64/Release/HueConverge.ofx.bundle
+
+  release-github:
+    name: Release to GitHub
+    needs: [build-macos, build-windows]
+    if: |
+      always() &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      (needs.build-macos.result == 'success' || needs.build-macos.result == 'skipped') &&
+      (needs.build-windows.result == 'success' || needs.build-windows.result == 'skipped') &&
+      (needs.build-macos.result == 'success' || needs.build-windows.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download macOS Artifact
+        if: needs.build-macos.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: HueConverge-macOS
+          path: macos-bundle
+
+      - name: Download Windows Artifact
+        if: needs.build-windows.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: HueConverge-Windows
+          path: windows-bundle
+
+      - name: Prepare ZIP Files
+        run: |
+          if [ -d "macos-bundle" ]; then
+            mv macos-bundle HueConverge.macOS.DR17.METAL.ofx.bundle
+            zip -r HueConverge-macOS.zip HueConverge.macOS.DR17.METAL.ofx.bundle
+            rm -rf HueConverge.macOS.DR17.METAL.ofx.bundle
+          fi
+          if [ -d "windows-bundle" ]; then
+            mv windows-bundle HueConverge.ofx.bundle
+            zip -r HueConverge-Windows.zip HueConverge.ofx.bundle
+            rm -rf HueConverge.ofx.bundle
+          fi
+          if [ ! -f "HueConverge-macOS.zip" ] && [ ! -f "HueConverge-Windows.zip" ]; then
+            echo "Erro: Nenhum artefato encontrado para upload. Abortando release."
+            exit 1
+          fi
+
+      - name: Determine Version
+        id: version
+        env:
+          MANUAL_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          if [[ -n "$MANUAL_VERSION" ]]; then
+            VERSION="$MANUAL_VERSION"
+          elif [[ -f "HueConverge/VERSION" ]]; then
+            VERSION=$(cat HueConverge/VERSION | sed 's/v//')
+          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#hc-v}"
+          else
+            VERSION="0.0.0-hc-build-${{ github.run_number }}"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Determine Release Notes
+        id: release_notes
+        env:
+          MANUAL_DESC: ${{ github.event.inputs.description }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "$MANUAL_DESC" ]; then
+            echo "$MANUAL_DESC" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "push" ]; then
+            echo "$COMMIT_MSG" >> $GITHUB_OUTPUT
+          else
+            echo "Release gerado automaticamente." >> $GITHUB_OUTPUT
+          fi
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GH_PD_TOKEN }}
+          tag_name: hc-v${{ steps.version.outputs.VERSION }}
+          name: HueConverge v${{ steps.version.outputs.VERSION }}
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease == 'true' }}
+          body: ${{ steps.release_notes.outputs.notes }}
+          files: |
+            HueConverge-macOS.zip
+            HueConverge-Windows.zip
