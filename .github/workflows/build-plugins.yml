@@ -1,0 +1,355 @@
+name: Build Plugins
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'HueConverge/VERSION'
+      - 'VideoGrade/VERSION'
+  workflow_dispatch:
+    inputs:
+      plugin:
+        description: 'Plugin para build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - hueconverge
+          - videograde
+      target:
+        description: 'Alvo do build'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - windows
+          - macos
+      version:
+        description: 'Versao manual para o release (ex: 1.2.3)'
+        required: false
+        default: ''
+      description:
+        description: 'Descricao do release (opcional)'
+        required: false
+        type: string
+        default: ''
+      prerelease:
+        description: 'Marcar como pre-release (beta)?'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    name: Prepare Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      plugins: ${{ steps.matrix.outputs.plugins }}
+      target: ${{ steps.matrix.outputs.target }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine Plugins
+        id: matrix
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_PLUGIN: ${{ github.event.inputs.plugin }}
+          INPUT_TARGET: ${{ github.event.inputs.target }}
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          PLUGINS='[]'
+
+          add_plugin() {
+            local key="$1"
+            local dir="$2"
+            local name="$3"
+            local tag_prefix="$4"
+
+            PLUGINS=$(jq -c \
+              --arg key "$key" \
+              --arg dir "$dir" \
+              --arg name "$name" \
+              --arg tag_prefix "$tag_prefix" \
+              '. + [{
+                key: $key,
+                dir: $dir,
+                name: $name,
+                tag_prefix: $tag_prefix,
+                version_file: ($dir + "/VERSION"),
+                vcxproj: ($dir + "/" + $name + "Plugin.vcxproj"),
+                solution: ($dir + "/" + $name + "Plugin.sln"),
+                mac_bundle: ("BaldavengerPluginsMETAL_DR17/" + $name + ".macOS.DR17.METAL.ofx.bundle"),
+                windows_bundle: ($dir + "/x64/Release/" + $name + ".ofx.bundle")
+              }]' <<< "$PLUGINS")
+          }
+
+          add_known_plugin() {
+            case "$1" in
+              hueconverge)
+                add_plugin hueconverge HueConverge HueConverge hc
+                ;;
+              videograde)
+                add_plugin videograde VideoGrade VideoGrade vg
+                ;;
+              *)
+                echo "Unknown plugin: $1" >&2
+                exit 1
+                ;;
+            esac
+          }
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            case "${INPUT_PLUGIN:-all}" in
+              all)
+                add_known_plugin hueconverge
+                add_known_plugin videograde
+                ;;
+              hueconverge|videograde)
+                add_known_plugin "$INPUT_PLUGIN"
+                ;;
+              *)
+                echo "Invalid plugin input: ${INPUT_PLUGIN:-}" >&2
+                exit 1
+                ;;
+            esac
+          else
+            if [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
+              CHANGED_FILES=$(git show --format= --name-only "$CURRENT_SHA")
+            else
+              CHANGED_FILES=$(git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA")
+            fi
+
+            if grep -qx 'HueConverge/VERSION' <<< "$CHANGED_FILES"; then
+              add_known_plugin hueconverge
+            fi
+            if grep -qx 'VideoGrade/VERSION' <<< "$CHANGED_FILES"; then
+              add_known_plugin videograde
+            fi
+          fi
+
+          TARGET="${INPUT_TARGET:-both}"
+
+          echo "plugins=$PLUGINS" >> "$GITHUB_OUTPUT"
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+
+  build-macos:
+    name: Build macOS (${{ matrix.plugin.name }})
+    needs: prepare
+    if: |
+      needs.prepare.outputs.plugins != '[]' &&
+      (needs.prepare.outputs.target == 'both' || needs.prepare.outputs.target == 'macos')
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: ${{ fromJson(needs.prepare.outputs.plugins) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Plugin
+        run: |
+          cd "${{ matrix.plugin.dir }}"
+          make INSTALL_PLUGIN=FALSE
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.plugin.name }}-macOS
+          path: ${{ matrix.plugin.mac_bundle }}
+
+  build-windows:
+    name: Build Windows (${{ matrix.plugin.name }})
+    needs: prepare
+    if: |
+      needs.prepare.outputs.plugins != '[]' &&
+      (needs.prepare.outputs.target == 'both' || needs.prepare.outputs.target == 'windows')
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: ${{ fromJson(needs.prepare.outputs.plugins) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Set up CUDA
+        uses: Jimver/cuda-toolkit@v0.2.16
+        with:
+          cuda: '12.4.1'
+          method: 'network'
+          sub-packages: '["nvcc", "cudart", "opencl", "visual_studio_integration"]'
+
+      - name: Install CUDA MSBuild Integration
+        shell: pwsh
+        run: |
+          $cudaMsbuild = Join-Path $env:CUDA_PATH 'extras\visual_studio_integration\MSBuildExtensions'
+          if (!(Test-Path $cudaMsbuild)) {
+            Write-Error "CUDA MSBuild extensions not found at $cudaMsbuild"
+          }
+
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $vsInstall = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (!$vsInstall) {
+            Write-Error 'Visual Studio installation with VC tools was not found.'
+          }
+
+          $vcMsbuildRoot = Join-Path $vsInstall 'MSBuild\Microsoft\VC'
+          $vcVersionDirs = Get-ChildItem $vcMsbuildRoot -Directory -Filter 'v*'
+          if (!$vcVersionDirs) {
+            Write-Error "No VC MSBuild version directories found at $vcMsbuildRoot"
+          }
+
+          foreach ($vcVersionDir in $vcVersionDirs) {
+            $buildCustomizations = Join-Path $vcVersionDir.FullName 'BuildCustomizations'
+            New-Item -ItemType Directory -Force -Path $buildCustomizations | Out-Null
+            Copy-Item (Join-Path $cudaMsbuild 'CUDA 12.4.props') $buildCustomizations -Force
+            Copy-Item (Join-Path $cudaMsbuild 'CUDA 12.4.targets') $buildCustomizations -Force
+            Copy-Item (Join-Path $cudaMsbuild 'CUDA 12.4.xml') $buildCustomizations -Force
+            Copy-Item (Join-Path $cudaMsbuild 'Nvda.Build.CudaTasks.v12.4.dll') $buildCustomizations -Force
+          }
+
+      - name: Configure CUDA Version in Project File
+        shell: pwsh
+        run: |
+          $project = '${{ matrix.plugin.vcxproj }}'
+          (Get-Content $project -Raw) -replace 'CUDA 11.0', 'CUDA 12.4' | Set-Content $project -NoNewline
+
+      - name: Build Plugin
+        run: |
+          msbuild ${{ matrix.plugin.solution }} /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143
+        env:
+          CUDA_INC_PATH: ${{ env.CUDA_PATH }}\include
+          CUDA_LIB_PATH: ${{ env.CUDA_PATH }}\lib\x64
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.plugin.name }}-Windows
+          path: ${{ matrix.plugin.windows_bundle }}
+
+  release-github:
+    name: Release (${{ matrix.plugin.name }})
+    needs: [prepare, build-macos, build-windows]
+    if: |
+      always() &&
+      needs.prepare.outputs.plugins != '[]' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      (needs.build-macos.result == 'success' || needs.build-macos.result == 'skipped') &&
+      (needs.build-windows.result == 'success' || needs.build-windows.result == 'skipped') &&
+      (needs.build-macos.result == 'success' || needs.build-windows.result == 'success')
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: ${{ fromJson(needs.prepare.outputs.plugins) }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download macOS Artifact
+        if: needs.build-macos.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.plugin.name }}-macOS
+          path: macos-bundle
+
+      - name: Download Windows Artifact
+        if: needs.build-windows.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.plugin.name }}-Windows
+          path: windows-bundle
+
+      - name: Prepare ZIP Files
+        id: package
+        env:
+          PLUGIN_NAME: ${{ matrix.plugin.name }}
+        run: |
+          set -euo pipefail
+
+          files=()
+
+          if [ -d "macos-bundle" ]; then
+            mv macos-bundle "${PLUGIN_NAME}.macOS.DR17.METAL.ofx.bundle"
+            zip -r "${PLUGIN_NAME}-macOS.zip" "${PLUGIN_NAME}.macOS.DR17.METAL.ofx.bundle"
+            rm -rf "${PLUGIN_NAME}.macOS.DR17.METAL.ofx.bundle"
+            files+=("${PLUGIN_NAME}-macOS.zip")
+          fi
+
+          if [ -d "windows-bundle" ]; then
+            mv windows-bundle "${PLUGIN_NAME}.ofx.bundle"
+            zip -r "${PLUGIN_NAME}-Windows.zip" "${PLUGIN_NAME}.ofx.bundle"
+            rm -rf "${PLUGIN_NAME}.ofx.bundle"
+            files+=("${PLUGIN_NAME}-Windows.zip")
+          fi
+
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "Erro: Nenhum artefato encontrado para upload. Abortando release."
+            exit 1
+          fi
+
+          {
+            echo 'files<<EOF'
+            printf '%s\n' "${files[@]}"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Determine Version
+        id: version
+        env:
+          MANUAL_VERSION: ${{ github.event.inputs.version }}
+          PLUGIN_DIR: ${{ matrix.plugin.dir }}
+          TAG_PREFIX: ${{ matrix.plugin.tag_prefix }}
+        run: |
+          if [[ -n "$MANUAL_VERSION" ]]; then
+            VERSION="$MANUAL_VERSION"
+          elif [[ -f "$PLUGIN_DIR/VERSION" ]]; then
+            VERSION=$(cat "$PLUGIN_DIR/VERSION" | sed 's/v//')
+          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#${TAG_PREFIX}-v}"
+          else
+            VERSION="0.0.0-${TAG_PREFIX}-build-${{ github.run_number }}"
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Determine Release Notes
+        id: release_notes
+        env:
+          MANUAL_DESC: ${{ github.event.inputs.description }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          echo "notes<<EOF" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "$MANUAL_DESC" ]; then
+            echo "$MANUAL_DESC" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" == "push" ]; then
+            echo "$COMMIT_MSG" >> "$GITHUB_OUTPUT"
+          else
+            echo "Release gerado automaticamente." >> "$GITHUB_OUTPUT"
+          fi
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GH_PD_TOKEN }}
+          tag_name: ${{ matrix.plugin.tag_prefix }}-v${{ steps.version.outputs.VERSION }}
+          name: ${{ matrix.plugin.name }} v${{ steps.version.outputs.VERSION }}
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease == 'true' }}
+          body: ${{ steps.release_notes.outputs.notes }}
+          files: ${{ steps.package.outputs.files }}
