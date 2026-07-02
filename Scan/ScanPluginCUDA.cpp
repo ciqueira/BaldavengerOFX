@@ -26,11 +26,19 @@ using std::string;
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
 #else
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
 #include <GL/gl.h>
 #endif
 
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-#include <windows.h>
 #define isnan _isnan
 #else
 using std::isnan;
