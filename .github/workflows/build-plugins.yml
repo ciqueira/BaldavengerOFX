@@ -7,6 +7,7 @@ on:
     paths:
       - 'HueConverge/VERSION'
       - 'VideoGrade/VERSION'
+      - 'FreqSep/VERSION'
   workflow_dispatch:
     inputs:
       plugin:
@@ -18,6 +19,7 @@ on:
           - all
           - hueconverge
           - videograde
+          - freqsep
       target:
         description: 'Alvo do build'
         required: true
@@ -75,18 +77,15 @@ jobs:
             local key="$1"
             local dir="$2"
             local name="$3"
-            local tag_prefix="$4"
 
             PLUGINS=$(jq -c \
               --arg key "$key" \
               --arg dir "$dir" \
               --arg name "$name" \
-              --arg tag_prefix "$tag_prefix" \
               '. + [{
                 key: $key,
                 dir: $dir,
                 name: $name,
-                tag_prefix: $tag_prefix,
                 version_file: ($dir + "/VERSION"),
                 vcxproj: ($dir + "/" + $name + "Plugin.vcxproj"),
                 solution: ($dir + "/" + $name + "Plugin.sln"),
@@ -98,10 +97,13 @@ jobs:
           add_known_plugin() {
             case "$1" in
               hueconverge)
-                add_plugin hueconverge HueConverge HueConverge hc
+                add_plugin hueconverge HueConverge HueConverge
                 ;;
               videograde)
-                add_plugin videograde VideoGrade VideoGrade vg
+                add_plugin videograde VideoGrade VideoGrade
+                ;;
+              freqsep)
+                add_plugin freqsep FreqSep FreqSep
                 ;;
               *)
                 echo "Unknown plugin: $1" >&2
@@ -115,8 +117,9 @@ jobs:
               all)
                 add_known_plugin hueconverge
                 add_known_plugin videograde
+                add_known_plugin freqsep
                 ;;
-              hueconverge|videograde)
+              hueconverge|videograde|freqsep)
                 add_known_plugin "$INPUT_PLUGIN"
                 ;;
               *)
@@ -136,6 +139,9 @@ jobs:
             fi
             if grep -qx 'VideoGrade/VERSION' <<< "$CHANGED_FILES"; then
               add_known_plugin videograde
+            fi
+            if grep -qx 'FreqSep/VERSION' <<< "$CHANGED_FILES"; then
+              add_known_plugin freqsep
             fi
           fi
 
@@ -242,7 +248,7 @@ jobs:
           path: ${{ matrix.plugin.windows_bundle }}
 
   release-github:
-    name: Release (${{ matrix.plugin.name }})
+    name: Release to GitHub
     needs: [prepare, build-macos, build-windows]
     if: |
       always() &&
@@ -252,50 +258,51 @@ jobs:
       (needs.build-windows.result == 'success' || needs.build-windows.result == 'skipped') &&
       (needs.build-macos.result == 'success' || needs.build-windows.result == 'success')
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        plugin: ${{ fromJson(needs.prepare.outputs.plugins) }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Download macOS Artifact
+      - name: Download macOS Artifacts
         if: needs.build-macos.result == 'success'
         uses: actions/download-artifact@v4
         with:
-          name: ${{ matrix.plugin.name }}-macOS
-          path: macos-bundle
+          pattern: '*-macOS'
+          path: macos-artifacts
 
-      - name: Download Windows Artifact
+      - name: Download Windows Artifacts
         if: needs.build-windows.result == 'success'
         uses: actions/download-artifact@v4
         with:
-          name: ${{ matrix.plugin.name }}-Windows
-          path: windows-bundle
+          pattern: '*-Windows'
+          path: windows-artifacts
 
       - name: Prepare ZIP Files
         id: package
-        env:
-          PLUGIN_NAME: ${{ matrix.plugin.name }}
         run: |
           set -euo pipefail
 
+          shopt -s nullglob
           files=()
 
-          if [ -d "macos-bundle" ]; then
-            mv macos-bundle "${PLUGIN_NAME}.macOS.DR17.METAL.ofx.bundle"
-            zip -r "${PLUGIN_NAME}-macOS.zip" "${PLUGIN_NAME}.macOS.DR17.METAL.ofx.bundle"
-            rm -rf "${PLUGIN_NAME}.macOS.DR17.METAL.ofx.bundle"
-            files+=("${PLUGIN_NAME}-macOS.zip")
-          fi
+          for artifact_dir in macos-artifacts/*-macOS; do
+            plugin_name=$(basename "$artifact_dir" -macOS)
+            bundle_name="${plugin_name}.macOS.DR17.METAL.ofx.bundle"
 
-          if [ -d "windows-bundle" ]; then
-            mv windows-bundle "${PLUGIN_NAME}.ofx.bundle"
-            zip -r "${PLUGIN_NAME}-Windows.zip" "${PLUGIN_NAME}.ofx.bundle"
-            rm -rf "${PLUGIN_NAME}.ofx.bundle"
-            files+=("${PLUGIN_NAME}-Windows.zip")
-          fi
+            mv "$artifact_dir" "$bundle_name"
+            zip -r "${plugin_name}-macOS.zip" "$bundle_name"
+            rm -rf "$bundle_name"
+            files+=("${plugin_name}-macOS.zip")
+          done
+
+          for artifact_dir in windows-artifacts/*-Windows; do
+            plugin_name=$(basename "$artifact_dir" -Windows)
+            bundle_name="${plugin_name}.ofx.bundle"
+
+            mv "$artifact_dir" "$bundle_name"
+            zip -r "${plugin_name}-Windows.zip" "$bundle_name"
+            rm -rf "$bundle_name"
+            files+=("${plugin_name}-Windows.zip")
+          done
 
           if [ "${#files[@]}" -eq 0 ]; then
             echo "Erro: Nenhum artefato encontrado para upload. Abortando release."
@@ -312,19 +319,31 @@ jobs:
         id: version
         env:
           MANUAL_VERSION: ${{ github.event.inputs.version }}
-          PLUGIN_DIR: ${{ matrix.plugin.dir }}
-          TAG_PREFIX: ${{ matrix.plugin.tag_prefix }}
+          PLUGINS_JSON: ${{ needs.prepare.outputs.plugins }}
         run: |
-          if [[ -n "$MANUAL_VERSION" ]]; then
+          set -euo pipefail
+
+          if [[ -n "${MANUAL_VERSION:-}" ]]; then
             VERSION="$MANUAL_VERSION"
-          elif [[ -f "$PLUGIN_DIR/VERSION" ]]; then
-            VERSION=$(cat "$PLUGIN_DIR/VERSION" | sed 's/v//')
-          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
-            VERSION="${{ github.ref_name }}"
-            VERSION="${VERSION#${TAG_PREFIX}-v}"
           else
-            VERSION="0.0.0-${TAG_PREFIX}-build-${{ github.run_number }}"
+            mapfile -t versions < <(jq -r '.[].version_file' <<< "$PLUGINS_JSON" | while read -r version_file; do
+              if [[ -f "$version_file" ]]; then
+                sed 's/^v//' "$version_file"
+              fi
+            done | sort -u)
+
+            if [[ "${#versions[@]}" -eq 1 ]]; then
+              VERSION="${versions[0]}"
+            elif [[ "${#versions[@]}" -gt 1 ]]; then
+              echo "Erro: plugins selecionados possuem VERSION diferentes: ${versions[*]}"
+              echo "Informe uma versao manual no workflow_dispatch para criar uma release unica."
+              exit 1
+            else
+              VERSION="0.0.0-build-${{ github.run_number }}"
+            fi
           fi
+
+          VERSION="${VERSION#v}"
           echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Determine Release Notes
@@ -347,8 +366,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GH_PD_TOKEN }}
-          tag_name: ${{ matrix.plugin.tag_prefix }}-v${{ steps.version.outputs.VERSION }}
-          name: ${{ matrix.plugin.name }} v${{ steps.version.outputs.VERSION }}
+          tag_name: pd-v${{ steps.version.outputs.VERSION }}
+          name: Baldavenger Plugins
           draft: false
           prerelease: ${{ github.event.inputs.prerelease == 'true' }}
           body: ${{ steps.release_notes.outputs.notes }}
