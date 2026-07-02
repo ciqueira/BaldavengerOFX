@@ -24,10 +24,14 @@ More plugins from the original suite may be added in future releases.
 
 Current builds are available for:
 
-- macOS
-- Windows
+- macOS, including Intel Macs and Apple Silicon M-series processors
+- Windows x64
 
-macOS builds are prepared for modern DaVinci Resolve workflows, including Apple Silicon and Intel Mac support when available in the release package.
+Supported processing backends:
+
+- Metal kernels on macOS for GPU-accelerated plugins
+- CUDA kernels on Windows for NVIDIA GPU acceleration
+- CPU kernels for CPU-only plugins such as ResolveMath and ResolveMathxtra
 
 ## Installation
 
