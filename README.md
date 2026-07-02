@@ -15,6 +15,8 @@ This build currently includes:
 | --- | --- | --- |
 | VideoGrade | OpenKey | [Get Key](https://bridge.magnociqueira.com.br/github/claim?t=baldavengerofx&tmpl=76bda215-5c6b-4a80-b35d-de4942ee0be6&sig=14aabec3a222872e) |
 | HueConverge | OpenKey | [Get Key](https://bridge.magnociqueira.com.br/github/claim?t=baldavengerofx&tmpl=c1ec264e-ccf9-4c9a-bfe0-180877bb3b2d&sig=ee04aca36d7d28ae) |
+| FilmGrade | OpenKey | [Get Key](https://bridge.magnociqueira.com.br/github/claim?t=baldavengerofx&tmpl=a5b1c083-a666-44fa-8948-12a94768ec9e&sig=ab4bb6e904a42a34) |
+| FreqSep | OpenKey | [Get Key](https://bridge.magnociqueira.com.br/github/claim?t=baldavengerofx&tmpl=61e768d4-4132-4bbb-ad5b-53cccc54b49f&sig=a82373ddfc7a19f8) |
 
 More plugins from the original suite may be added in future releases.
 
