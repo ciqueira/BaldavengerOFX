@@ -394,8 +394,8 @@ jobs:
             exit 1
           fi
 
-          jq . <<< "$manifest" > manifest.json
-          files+=("manifest.json")
+          jq . <<< "$manifest" > release-manifest.json
+          files+=("release-manifest.json")
 
           {
             echo 'files<<EOF'
