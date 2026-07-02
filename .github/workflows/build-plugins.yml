@@ -13,6 +13,7 @@ on:
           - hueconverge
           - videograde
           - freqsep
+          - filmgrade
       target:
         description: 'Alvo do build'
         required: true
@@ -22,10 +23,6 @@ on:
           - both
           - windows
           - macos
-      version:
-        description: 'Versao manual para o release (ex: 1.2.3)'
-        required: false
-        default: ''
       description:
         description: 'Descricao do release (opcional)'
         required: false
@@ -76,7 +73,6 @@ jobs:
                 key: $key,
                 dir: $dir,
                 name: $name,
-                version_file: ($dir + "/VERSION"),
                 vcxproj: ($dir + "/" + $name + "Plugin.vcxproj"),
                 solution: ($dir + "/" + $name + "Plugin.sln"),
                 mac_bundle: ("BaldavengerPluginsMETAL_DR17/" + $name + ".macOS.DR17.METAL.ofx.bundle"),
@@ -95,6 +91,9 @@ jobs:
               freqsep)
                 add_plugin freqsep FreqSep FreqSep
                 ;;
+              filmgrade)
+                add_plugin filmgrade FilmGrade FilmGrade
+                ;;
               *)
                 echo "Unknown plugin: $1" >&2
                 exit 1
@@ -107,8 +106,9 @@ jobs:
               add_known_plugin hueconverge
               add_known_plugin videograde
               add_known_plugin freqsep
+              add_known_plugin filmgrade
               ;;
-            hueconverge|videograde|freqsep)
+            hueconverge|videograde|freqsep|filmgrade)
               add_known_plugin "$INPUT_PLUGIN"
               ;;
             *)
@@ -146,6 +146,7 @@ jobs:
         with:
           name: ${{ matrix.plugin.name }}-macOS
           path: ${{ matrix.plugin.mac_bundle }}
+          retention-days: 1
 
   build-windows:
     name: Build Windows (${{ matrix.plugin.name }})
@@ -218,6 +219,7 @@ jobs:
         with:
           name: ${{ matrix.plugin.name }}-Windows
           path: ${{ matrix.plugin.windows_bundle }}
+          retention-days: 1
 
   release-github:
     name: Release to GitHub
@@ -286,36 +288,12 @@ jobs:
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
 
-      - name: Determine Version
-        id: version
-        env:
-          MANUAL_VERSION: ${{ github.event.inputs.version }}
-          PLUGINS_JSON: ${{ needs.prepare.outputs.plugins }}
+      - name: Update Release Tag
         run: |
           set -euo pipefail
 
-          if [[ -n "${MANUAL_VERSION:-}" ]]; then
-            VERSION="$MANUAL_VERSION"
-          else
-            mapfile -t versions < <(jq -r '.[].version_file' <<< "$PLUGINS_JSON" | while read -r version_file; do
-              if [[ -f "$version_file" ]]; then
-                sed 's/^v//' "$version_file"
-              fi
-            done | sort -u)
-
-            if [[ "${#versions[@]}" -eq 1 ]]; then
-              VERSION="${versions[0]}"
-            elif [[ "${#versions[@]}" -gt 1 ]]; then
-              echo "Erro: plugins selecionados possuem VERSION diferentes: ${versions[*]}"
-              echo "Informe uma versao manual no workflow_dispatch para criar uma release unica."
-              exit 1
-            else
-              VERSION="0.0.0-build-${{ github.run_number }}"
-            fi
-          fi
-
-          VERSION="${VERSION#v}"
-          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+          git tag -f pd-lastest "$GITHUB_SHA"
+          git push --force origin refs/tags/pd-lastest
 
       - name: Determine Release Notes
         id: release_notes
@@ -334,9 +312,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GH_PD_TOKEN }}
-          tag_name: pd-v${{ steps.version.outputs.VERSION }}
+          tag_name: pd-lastest
           name: Baldavenger Plugins
           draft: false
           prerelease: ${{ github.event.inputs.prerelease == 'true' }}
           body: ${{ steps.release_notes.outputs.notes }}
           files: ${{ steps.package.outputs.files }}
+          overwrite_files: true
+          make_latest: true

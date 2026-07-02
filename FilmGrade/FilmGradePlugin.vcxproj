@@ -59,7 +59,7 @@
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
       <Command>if not exist "$(OutDir)FilmGrade.ofx.bundle\Contents\Resources" mkdir "$(OutDir)FilmGrade.ofx.bundle\Contents\Resources"
-      copy "(OutDir)..\..\BaldavengerOFX.FilmGrade.png" "$(OutDir)FilmGrade.ofx.bundle\Contents\Resources"
+      copy "$(OutDir)..\..\BaldavengerOFX.FilmGrade.png" "$(OutDir)FilmGrade.ofx.bundle\Contents\Resources"
 if not exist "$(OutDir)FilmGrade.ofx.bundle\Contents\Win64" mkdir "$(OutDir)FilmGrade.ofx.bundle\Contents\Win64"
 copy /Y "$(TargetPath)" /B "$(OutDir)FilmGrade.ofx.bundle\Contents\Win64\FilmGrade.ofx" /B
 </Command>
