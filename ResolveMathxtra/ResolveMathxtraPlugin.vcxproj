@@ -59,7 +59,7 @@
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
       <Command>if not exist "$(OutDir)ResolveMathxtra.ofx.bundle\Contents\Resources" mkdir "$(OutDir)ResolveMathxtra.ofx.bundle\Contents\Resources"
-      copy "(OutDir)../../BaldavengerOFX.ResolveMathxtra.png" "$(OutDir)ResolveMathxtra.ofx.bundle\Contents\Resources"
+      copy "$(OutDir)../../BaldavengerOFX.ResolveMathxtra.png" "$(OutDir)ResolveMathxtra.ofx.bundle\Contents\Resources"
 	  if not exist "$(OutDir)ResolveMathxtra.ofx.bundle\Contents\Win64" mkdir "$(OutDir)ResolveMathxtra.ofx.bundle\Contents\Win64"
 	  copy /Y "$(TargetPath)" /B "$(OutDir)ResolveMathxtra.ofx.bundle\Contents\Win64\ResolveMathxtra.ofx" /B
 </Command>

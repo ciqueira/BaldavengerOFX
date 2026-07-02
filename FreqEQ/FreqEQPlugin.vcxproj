@@ -59,7 +59,7 @@
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
       <Command>if not exist "$(OutDir)FreqEQ.ofx.bundle\Contents\Resources" mkdir "$(OutDir)FreqEQ.ofx.bundle\Contents\Resources"
-      copy "(OutDir)..\..\BaldavengerOFX.FreqEQ.png" "$(OutDir)FreqEQ.ofx.bundle\Contents\Resources"
+      copy "$(OutDir)..\..\BaldavengerOFX.FreqEQ.png" "$(OutDir)FreqEQ.ofx.bundle\Contents\Resources"
 if not exist "$(OutDir)FreqEQ.ofx.bundle\Contents\Win64" mkdir "$(OutDir)FreqEQ.ofx.bundle\Contents\Win64"
 copy /Y "$(TargetPath)" /B "$(OutDir)FreqEQ.ofx.bundle\Contents\Win64\FreqEQ.ofx" /B
 </Command>
@@ -77,7 +77,7 @@ copy /Y "$(TargetPath)" /B "$(OutDir)FreqEQ.ofx.bundle\Contents\Win64\FreqEQ.ofx
     <ClCompile Include="..\openfx\Support\Library\ofxsParams.cpp" />
     <ClCompile Include="..\openfx\Support\Library\ofxsProperty.cpp" />
     <ClCompile Include="..\openfx\Support\Library\ofxsPropertyValidation.cpp" />
-    <ClCompile Include="FilmGradePluginCUDA.cpp" />
+    <ClCompile Include="FreqEQPluginCUDA.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="FreqEQCudaKernel.cu" />

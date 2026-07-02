@@ -59,7 +59,7 @@
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
       <Command>if not exist "$(OutDir)Scan.ofx.bundle\Contents\Resources" mkdir "$(OutDir)Scan.ofx.bundle\Contents\Resources"
-      copy "(OutDir)..\..\BaldavengerOFX.Scan.png" "$(OutDir)Scan.ofx.bundle\Contents\Resources"
+      copy "$(OutDir)..\..\BaldavengerOFX.Scan.png" "$(OutDir)Scan.ofx.bundle\Contents\Resources"
 	  if not exist "$(OutDir)Scan.ofx.bundle\Contents\Win64" mkdir "$(OutDir)Scan.ofx.bundle\Contents\Win64"
 	  copy /Y "$(TargetPath)" /B "$(OutDir)Scan.ofx.bundle\Contents\Win64\Scan.ofx" /B
 </Command>

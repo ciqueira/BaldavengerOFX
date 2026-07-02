@@ -14,6 +14,14 @@ on:
           - videograde
           - freqsep
           - filmgrade
+          - freqeq
+          - matrix
+          - qualifier
+          - replace
+          - resolvemath
+          - resolvemathxtra
+          - scan
+          - softclip
       target:
         description: 'Alvo do build'
         required: true
@@ -64,18 +72,23 @@ jobs:
             local key="$1"
             local dir="$2"
             local name="$3"
+            local mac_gpu="${4:-METAL}"
+            local mac_family="${5:-METAL}"
 
             PLUGINS=$(jq -c \
               --arg key "$key" \
               --arg dir "$dir" \
               --arg name "$name" \
+              --arg mac_gpu "$mac_gpu" \
+              --arg mac_family "$mac_family" \
               '. + [{
                 key: $key,
                 dir: $dir,
                 name: $name,
+                mac_gpu: $mac_gpu,
                 vcxproj: ($dir + "/" + $name + "Plugin.vcxproj"),
                 solution: ($dir + "/" + $name + "Plugin.sln"),
-                mac_bundle: ("BaldavengerPluginsMETAL_DR17/" + $name + ".macOS.DR17.METAL.ofx.bundle"),
+                mac_bundle: ("BaldavengerPlugins" + $mac_family + "_DR17/" + $name + ".macOS.DR17." + $mac_gpu + ".ofx.bundle"),
                 windows_bundle: ($dir + "/x64/Release/" + $name + ".ofx.bundle")
               }]' <<< "$PLUGINS")
           }
@@ -94,6 +107,30 @@ jobs:
               filmgrade)
                 add_plugin filmgrade FilmGrade FilmGrade
                 ;;
+              freqeq)
+                add_plugin freqeq FreqEQ FreqEQ
+                ;;
+              matrix)
+                add_plugin matrix Matrix Matrix
+                ;;
+              qualifier)
+                add_plugin qualifier Qualifier Qualifier
+                ;;
+              replace)
+                add_plugin replace Replace Replace
+                ;;
+              resolvemath)
+                add_plugin resolvemath ResolveMath ResolveMath CPU CPU
+                ;;
+              resolvemathxtra)
+                add_plugin resolvemathxtra ResolveMathxtra ResolveMathxtra CPU CPU
+                ;;
+              scan)
+                add_plugin scan Scan Scan
+                ;;
+              softclip)
+                add_plugin softclip SoftClip SoftClip
+                ;;
               *)
                 echo "Unknown plugin: $1" >&2
                 exit 1
@@ -107,8 +144,16 @@ jobs:
               add_known_plugin videograde
               add_known_plugin freqsep
               add_known_plugin filmgrade
+              add_known_plugin freqeq
+              add_known_plugin matrix
+              add_known_plugin qualifier
+              add_known_plugin replace
+              add_known_plugin resolvemath
+              add_known_plugin resolvemathxtra
+              add_known_plugin scan
+              add_known_plugin softclip
               ;;
-            hueconverge|videograde|freqsep|filmgrade)
+            hueconverge|videograde|freqsep|filmgrade|freqeq|matrix|qualifier|replace|resolvemath|resolvemathxtra|scan|softclip)
               add_known_plugin "$INPUT_PLUGIN"
               ;;
             *)
@@ -251,6 +296,8 @@ jobs:
 
       - name: Prepare ZIP Files
         id: package
+        env:
+          PLUGINS_JSON: ${{ needs.prepare.outputs.plugins }}
         run: |
           set -euo pipefail
 
@@ -259,7 +306,8 @@ jobs:
 
           for artifact_dir in macos-artifacts/*-macOS; do
             plugin_name=$(basename "$artifact_dir" -macOS)
-            bundle_name="${plugin_name}.macOS.DR17.METAL.ofx.bundle"
+            mac_gpu=$(jq -r --arg name "$plugin_name" 'map(select(.name == $name))[0].mac_gpu // "METAL"' <<< "$PLUGINS_JSON")
+            bundle_name="${plugin_name}.macOS.DR17.${mac_gpu}.ofx.bundle"
 
             mv "$artifact_dir" "$bundle_name"
             zip -r "${plugin_name}-macOS.zip" "$bundle_name"
@@ -292,8 +340,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          git tag -f pd-lastest "$GITHUB_SHA"
-          git push --force origin refs/tags/pd-lastest
+          git tag -f pd-latest "$GITHUB_SHA"
+          git push --force origin refs/tags/pd-latest
 
       - name: Determine Release Notes
         id: release_notes
@@ -312,7 +360,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GH_PD_TOKEN }}
-          tag_name: pd-lastest
+          tag_name: pd-latest
           name: Baldavenger Plugins
           draft: false
           prerelease: ${{ github.event.inputs.prerelease == 'true' }}

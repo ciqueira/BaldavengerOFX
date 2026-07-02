@@ -59,7 +59,7 @@
     <PostBuildEvent>
       <Message>Creating bundle...</Message>
       <Command>if not exist "$(OutDir)SoftClip.ofx.bundle\Contents\Resources" mkdir "$(OutDir)SoftClip.ofx.bundle\Contents\Resources"
-      copy "(OutDir)..\..\BaldavengerOFX.SoftClip.png" "$(OutDir)SoftClip.ofx.bundle\Contents\Resources"
+      copy "$(OutDir)..\..\BaldavengerOFX.SoftClip.png" "$(OutDir)SoftClip.ofx.bundle\Contents\Resources"
 	  if not exist "$(OutDir)SoftClip.ofx.bundle\Contents\Win64" mkdir "$(OutDir)SoftClip.ofx.bundle\Contents\Win64"
 	  copy /Y "$(TargetPath)" /B "$(OutDir)SoftClip.ofx.bundle\Contents\Win64\SoftClip.ofx" /B
 </Command>
