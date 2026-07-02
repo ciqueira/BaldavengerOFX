@@ -74,6 +74,23 @@ jobs:
             local name="$3"
             local mac_gpu="${4:-METAL}"
             local mac_family="${5:-METAL}"
+            local display_name="PD - $name"
+            local entitlement="download:$key"
+            local version_file="$dir/VERSION"
+            local version
+
+            if [ ! -f "$version_file" ]; then
+              echo "Erro: arquivo VERSION nao encontrado para $name em $version_file." >&2
+              exit 1
+            fi
+
+            version=$(tr -d '[:space:]' < "$version_file")
+            version="${version#v}"
+
+            if [ -z "$version" ]; then
+              echo "Erro: arquivo VERSION vazio para $name em $version_file." >&2
+              exit 1
+            fi
 
             PLUGINS=$(jq -c \
               --arg key "$key" \
@@ -81,11 +98,17 @@ jobs:
               --arg name "$name" \
               --arg mac_gpu "$mac_gpu" \
               --arg mac_family "$mac_family" \
+              --arg display_name "$display_name" \
+              --arg entitlement "$entitlement" \
+              --arg version "$version" \
               '. + [{
                 key: $key,
                 dir: $dir,
                 name: $name,
                 mac_gpu: $mac_gpu,
+                display_name: $display_name,
+                entitlement: $entitlement,
+                version: $version,
                 vcxproj: ($dir + "/" + $name + "Plugin.vcxproj"),
                 solution: ($dir + "/" + $name + "Plugin.sln"),
                 mac_bundle: ("BaldavengerPlugins" + $mac_family + "_DR17/" + $name + ".macOS.DR17." + $mac_gpu + ".ofx.bundle"),
@@ -303,32 +326,76 @@ jobs:
 
           shopt -s nullglob
           files=()
+          manifest='{"schemaVersion":1,"assets":{}}'
+
+          plugin_field() {
+            local plugin_name="$1"
+            local field="$2"
+
+            jq -r \
+              --arg name "$plugin_name" \
+              --arg field "$field" \
+              'map(select(.name == $name))[0][$field] // empty' <<< "$PLUGINS_JSON"
+          }
+
+          add_manifest_asset() {
+            local zip_name="$1"
+            local plugin_name="$2"
+            local display_name
+            local entitlement
+
+            display_name=$(plugin_field "$plugin_name" display_name)
+            entitlement=$(plugin_field "$plugin_name" entitlement)
+
+            if [ -z "$display_name" ] || [ -z "$entitlement" ]; then
+              echo "Erro: metadados do manifest nao encontrados para $plugin_name." >&2
+              exit 1
+            fi
+
+            manifest=$(jq -c \
+              --arg zip_name "$zip_name" \
+              --arg display_name "$display_name" \
+              --arg entitlement "$entitlement" \
+              '.assets[$zip_name] = {
+                displayName: $display_name,
+                requiredEntitlements: [$entitlement]
+              }' <<< "$manifest")
+          }
 
           for artifact_dir in macos-artifacts/*-macOS; do
             plugin_name=$(basename "$artifact_dir" -macOS)
             mac_gpu=$(jq -r --arg name "$plugin_name" 'map(select(.name == $name))[0].mac_gpu // "METAL"' <<< "$PLUGINS_JSON")
+            version=$(plugin_field "$plugin_name" version)
             bundle_name="${plugin_name}.macOS.DR17.${mac_gpu}.ofx.bundle"
+            zip_name="${plugin_name}-macOS-${version}.zip"
 
             mv "$artifact_dir" "$bundle_name"
-            zip -r "${plugin_name}-macOS.zip" "$bundle_name"
+            zip -r "$zip_name" "$bundle_name"
             rm -rf "$bundle_name"
-            files+=("${plugin_name}-macOS.zip")
+            files+=("$zip_name")
+            add_manifest_asset "$zip_name" "$plugin_name"
           done
 
           for artifact_dir in windows-artifacts/*-Windows; do
             plugin_name=$(basename "$artifact_dir" -Windows)
+            version=$(plugin_field "$plugin_name" version)
             bundle_name="${plugin_name}.ofx.bundle"
+            zip_name="${plugin_name}-Windows-${version}.zip"
 
             mv "$artifact_dir" "$bundle_name"
-            zip -r "${plugin_name}-Windows.zip" "$bundle_name"
+            zip -r "$zip_name" "$bundle_name"
             rm -rf "$bundle_name"
-            files+=("${plugin_name}-Windows.zip")
+            files+=("$zip_name")
+            add_manifest_asset "$zip_name" "$plugin_name"
           done
 
           if [ "${#files[@]}" -eq 0 ]; then
             echo "Erro: Nenhum artefato encontrado para upload. Abortando release."
             exit 1
           fi
+
+          jq . <<< "$manifest" > manifest.json
+          files+=("manifest.json")
 
           {
             echo 'files<<EOF'
