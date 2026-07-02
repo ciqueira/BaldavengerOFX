@@ -1,13 +1,6 @@
 name: Build Plugins
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'HueConverge/VERSION'
-      - 'VideoGrade/VERSION'
-      - 'FreqSep/VERSION'
   workflow_dispatch:
     inputs:
       plugin:
@@ -63,11 +56,8 @@ jobs:
         id: matrix
         shell: bash
         env:
-          EVENT_NAME: ${{ github.event_name }}
           INPUT_PLUGIN: ${{ github.event.inputs.plugin }}
           INPUT_TARGET: ${{ github.event.inputs.target }}
-          BEFORE_SHA: ${{ github.event.before }}
-          CURRENT_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
 
@@ -112,38 +102,20 @@ jobs:
             esac
           }
 
-          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
-            case "${INPUT_PLUGIN:-all}" in
-              all)
-                add_known_plugin hueconverge
-                add_known_plugin videograde
-                add_known_plugin freqsep
-                ;;
-              hueconverge|videograde|freqsep)
-                add_known_plugin "$INPUT_PLUGIN"
-                ;;
-              *)
-                echo "Invalid plugin input: ${INPUT_PLUGIN:-}" >&2
-                exit 1
-                ;;
-            esac
-          else
-            if [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
-              CHANGED_FILES=$(git show --format= --name-only "$CURRENT_SHA")
-            else
-              CHANGED_FILES=$(git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA")
-            fi
-
-            if grep -qx 'HueConverge/VERSION' <<< "$CHANGED_FILES"; then
+          case "${INPUT_PLUGIN:-all}" in
+            all)
               add_known_plugin hueconverge
-            fi
-            if grep -qx 'VideoGrade/VERSION' <<< "$CHANGED_FILES"; then
               add_known_plugin videograde
-            fi
-            if grep -qx 'FreqSep/VERSION' <<< "$CHANGED_FILES"; then
               add_known_plugin freqsep
-            fi
-          fi
+              ;;
+            hueconverge|videograde|freqsep)
+              add_known_plugin "$INPUT_PLUGIN"
+              ;;
+            *)
+              echo "Invalid plugin input: ${INPUT_PLUGIN:-}" >&2
+              exit 1
+              ;;
+          esac
 
           TARGET="${INPUT_TARGET:-both}"
 
@@ -253,7 +225,6 @@ jobs:
     if: |
       always() &&
       needs.prepare.outputs.plugins != '[]' &&
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (needs.build-macos.result == 'success' || needs.build-macos.result == 'skipped') &&
       (needs.build-windows.result == 'success' || needs.build-windows.result == 'skipped') &&
       (needs.build-macos.result == 'success' || needs.build-windows.result == 'success')
@@ -350,15 +321,12 @@ jobs:
         id: release_notes
         env:
           MANUAL_DESC: ${{ github.event.inputs.description }}
-          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
           echo "notes<<EOF" >> "$GITHUB_OUTPUT"
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "$MANUAL_DESC" ]; then
+          if [ -n "$MANUAL_DESC" ]; then
             echo "$MANUAL_DESC" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event_name }}" == "push" ]; then
-            echo "$COMMIT_MSG" >> "$GITHUB_OUTPUT"
           else
-            echo "Release gerado automaticamente." >> "$GITHUB_OUTPUT"
+            echo "Release gerado manualmente." >> "$GITHUB_OUTPUT"
           fi
           echo "EOF" >> "$GITHUB_OUTPUT"
 
