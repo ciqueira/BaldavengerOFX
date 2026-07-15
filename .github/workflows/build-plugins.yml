@@ -326,7 +326,22 @@ jobs:
 
           shopt -s nullglob
           files=()
-          manifest='{"schemaVersion":1,"assets":{}}'
+          source_repository="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+          source_archive="${source_repository}/archive/${GITHUB_SHA}.tar.gz"
+          manifest=$(jq -nc \
+            --arg repository "$source_repository" \
+            --arg commit "$GITHUB_SHA" \
+            --arg archive "$source_archive" \
+            '{
+              schemaVersion: 1,
+              source: {
+                repository: $repository,
+                commit: $commit,
+                archive: $archive,
+                license: "GPL-3.0-or-later"
+              },
+              assets: {}
+            }')
 
           plugin_field() {
             local plugin_name="$1"
@@ -370,7 +385,7 @@ jobs:
             zip_name="${plugin_name}-macOS-${version}.zip"
 
             mv "$artifact_dir" "$bundle_name"
-            zip -r "$zip_name" "$bundle_name"
+            zip -r "$zip_name" "$bundle_name" LICENSE ATTRIBUTION.md MODIFICATIONS.md DISTRIBUTION.md SOURCE.md
             rm -rf "$bundle_name"
             files+=("$zip_name")
             add_manifest_asset "$zip_name" "$plugin_name"
@@ -383,7 +398,7 @@ jobs:
             zip_name="${plugin_name}-Windows-${version}.zip"
 
             mv "$artifact_dir" "$bundle_name"
-            zip -r "$zip_name" "$bundle_name"
+            zip -r "$zip_name" "$bundle_name" LICENSE ATTRIBUTION.md MODIFICATIONS.md DISTRIBUTION.md SOURCE.md
             rm -rf "$bundle_name"
             files+=("$zip_name")
             add_manifest_asset "$zip_name" "$plugin_name"
@@ -407,6 +422,12 @@ jobs:
         run: |
           set -euo pipefail
 
+          source_tag="mcnexus-source-${GITHUB_SHA::12}"
+          if ! git ls-remote --exit-code --tags origin "refs/tags/$source_tag" >/dev/null 2>&1; then
+            git tag "$source_tag" "$GITHUB_SHA"
+            git push origin "refs/tags/$source_tag"
+          fi
+
           git tag -f pd-latest "$GITHUB_SHA"
           git push --force origin refs/tags/pd-latest
 
@@ -421,6 +442,9 @@ jobs:
           else
             echo "Release gerado manualmente." >> "$GITHUB_OUTPUT"
           fi
+          echo "" >> "$GITHUB_OUTPUT"
+          echo "Complete corresponding source (GNU GPLv3): ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/tree/${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          echo "Source commit: ${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release

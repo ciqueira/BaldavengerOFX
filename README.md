@@ -1,11 +1,19 @@
 # BaldavengerOFX for DaVinci Resolve
 
-Cross-platform builds of selected plugins from the BaldavengerOFX plugin suite for DaVinci Resolve.
+[English](README.md) · [Português](README.pt-BR.md)
 
-This repository provides updated builds of selected BaldavengerOFX plugins for macOS and Windows. The plugins are distributed through [MCNexus](https://github.com/ciqueira/MCNexus), which handles license activation, downloads, updates, and platform-specific installation.
+Cross-platform builds of selected plugins from the BaldavengerOFX plugin suite
+for DaVinci Resolve.
 
-Original Baldavenger plugins and source by Paul Dore:
-https://github.com/baldavenger/BaldavengerPlugins
+This fork provides independently maintained builds for macOS and Windows. The
+plugins use Nexus services for distribution and technical-key association, and
+the [MCNexus](https://github.com/ciqueira/MCNexus) app for downloads, updates,
+and platform-specific installation.
+
+The original BaldavengerOFX source was created by Paul Dore:
+[baldavenger/BaldavengerOFX](https://github.com/baldavenger/BaldavengerOFX).
+This fork and the support service provided by Magno Ciqueira are independent
+and are not endorsed by or affiliated with the original author.
 
 ## Included Plugins
 
@@ -28,6 +36,8 @@ This build currently includes:
 
 More plugins from the original suite may be added in future releases.
 
+[Become a Supporter of the BaldavengerOFX Builds](https://bridge.magnociqueira.com.br/commerce/start?t=baldavengerofx&offer=baldavenger-ofx-supporter)
+
 ## Platform Support
 
 Current builds are available for:
@@ -43,9 +53,13 @@ Supported processing backends:
 
 ## Installation
 
-The plugins are distributed through MCNexus. Each plugin has its own OpenKey license, even when multiple plugins are published in the same release package.
+The plugins use Nexus distribution services and the MCNexus app. Each plugin
+has its own technical OpenKey record, even when multiple plugins are published
+in the same release package. These records facilitate distribution and do not
+replace or limit the GNU GPLv3 rights granted with the software.
 
-Choose the plugin you want to install and claim the matching free license key from the table above.
+Choose the plugin you want to install and claim the matching free key from the
+table above.
 
 ## Activation Steps
 
@@ -57,12 +71,53 @@ Choose the plugin you want to install and claim the matching free license key fr
 
 > Lost your key? Open the same claim link again with the same GitHub account to recover the same license.
 
+## Support the BaldavengerOFX Builds
+
+All listed plugins remain available under GNU GPLv3 without purchasing
+support. If these builds are useful in your work, one optional BaldavengerOFX
+builds support purchase covers every plugin currently listed in this README.
+
+The Supporter benefit includes:
+
+- priority private email support for 12 months, provided by Magno Ciqueira
+  for these builds; and
+- operational email notices about releases, compatibility, maintenance,
+  security, and material changes to the builds and service.
+
+Because this is a `support_only` offer, obtain at least one free BaldavengerOFX
+key above before starting checkout. Separate plugin keys do not require
+separate support purchases. Payment does not purchase the software, restrict
+redistribution, add exclusive plugin features, or provide official support
+from Paul Dore.
+
+[Become a Supporter of the BaldavengerOFX Builds](https://bridge.magnociqueira.com.br/commerce/start?t=baldavengerofx&offer=baldavenger-ofx-supporter)
+
+These builds and the related support are independently maintained by **Magno
+Ciqueira**. Distribution and technical keys use Nexus services, while MCNexus
+is the app used to install and update the plugins.
+
+Before purchasing, review the
+[product terms](https://legal.magnociqueira.com.br/products/baldavenger-ofx/terms/),
+[support policy](https://legal.magnociqueira.com.br/products/baldavenger-ofx/support/),
+[privacy notice](https://legal.magnociqueira.com.br/products/baldavenger-ofx/privacy/),
+and [cancellation and refund policy](https://legal.magnociqueira.com.br/products/baldavenger-ofx/refunds/).
+
+## License and Corresponding Source
+
+The fork remains licensed under the [GNU General Public License version 3](LICENSE).
+Payment is not required to exercise the rights provided by that license.
+
+The complete corresponding source for the binaries distributed through Nexus is
+maintained in this repository. Each binary release must identify the source
+tag or commit from which it was built. See [SOURCE.md](SOURCE.md),
+[MODIFICATIONS.md](MODIFICATIONS.md), and [DISTRIBUTION.md](DISTRIBUTION.md).
+
 ## Credits
 
 Original plugins and source:
 Paul Dore / Baldavenger  
-https://github.com/baldavenger
+https://github.com/baldavenger/BaldavengerOFX
 
-MCNexus distribution and OpenKey integration:
+Nexus distribution and MCNexus/OpenKey integration:
 Magno Ciqueira  
 https://github.com/ciqueira/MCNexus

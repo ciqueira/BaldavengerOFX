@@ -1,0 +1,23 @@
+# BaldavengerOFX Builds Support Terms
+
+[English](TERMS.md) · [Português](pt-BR/TERMS.md)
+
+Document version: `baldavenger-ofx-legal-2026-07-15`
+
+The authoritative published version is available at:
+https://legal.magnociqueira.com.br/products/baldavenger-ofx/terms/
+
+One optional Supporter purchase covers all plugins currently identified as
+supported in the repository README for 12 months. Separate technical keys do
+not require separate support purchases.
+
+The purchase covers independent support provided by Magno Dias Ciqueira for
+the builds and related operational communications. Nexus provides the
+distribution and key services; MCNexus is the installation and update app.
+It does not purchase the software, restrict redistribution, grant exclusive
+features, or provide official support from original author Paul Dore. The
+software and fork remain under GNU GPLv3.
+
+Maintainer and support provider: **Magno Ciqueira**. The authoritative legal
+site contains the seller's complete identification. Contact:
+[tools@magnociqueira.com.br](mailto:tools@magnociqueira.com.br).
