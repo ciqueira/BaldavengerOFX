@@ -8,7 +8,7 @@ DaVinci Resolve.
 Este fork fornece builds mantidos de forma independente para macOS e Windows.
 Os plugins utilizam os serviços Nexus para distribuição e associação de chaves
 técnicas, e o aplicativo
-[MCNexus](https://github.com/ciqueira/MCNexus) para downloads, atualizações e
+[MCNexus](https://mcnexus.app) para downloads, atualizações e
 instalação específica por plataforma.
 
 O código-fonte original do BaldavengerOFX foi criado por Paul Dore:
@@ -20,22 +20,22 @@ e não possuem afiliação ou endosso do autor original.
 
 | Plugin | Distribuição | Obter Chave |
 | --- | --- | --- |
-| VideoGrade | OpenKey | [Obter Chave](https://bridge.magnociqueira.com.br/github/claim?t=baldavengerofx&tmpl=76bda215-5c6b-4a80-b35d-de4942ee0be6&sig=14aabec3a222872e) |
-| HueConverge | OpenKey | [Obter Chave](https://bridge.magnociqueira.com.br/github/claim?t=baldavengerofx&tmpl=c1ec264e-ccf9-4c9a-bfe0-180877bb3b2d&sig=ee04aca36d7d28ae) |
-| FilmGrade | OpenKey | [Obter Chave](https://bridge.magnociqueira.com.br/github/claim?t=baldavengerofx&tmpl=a5b1c083-a666-44fa-8948-12a94768ec9e&sig=ab4bb6e904a42a34) |
-| FreqSep | OpenKey | [Obter Chave](https://bridge.magnociqueira.com.br/github/claim?t=baldavengerofx&tmpl=61e768d4-4132-4bbb-ad5b-53cccc54b49f&sig=a82373ddfc7a19f8) |
-| FreqEQ | OpenKey | [Obter Chave](https://bridge.magnociqueira.com.br/github/claim?t=baldavengerofx&tmpl=c9bf68b5-ec7d-4b71-aa40-a9f19673adac&sig=929fab384d2224c8) |
-| Matrix | OpenKey | [Obter Chave](https://bridge.magnociqueira.com.br/github/claim?t=baldavengerofx&tmpl=79a22a0d-e988-495b-a319-d21bad22eb94&sig=da5e810a0191e9a0) |
-| Qualifier | OpenKey | [Obter Chave](https://bridge.magnociqueira.com.br/github/claim?t=baldavengerofx&tmpl=cc82944c-7b63-4a31-9618-43fda25d5f6f&sig=8c678dfce1b070e3) |
-| Replace | OpenKey | [Obter Chave](https://bridge.magnociqueira.com.br/github/claim?t=baldavengerofx&tmpl=002ef62d-b23b-4f32-89a3-db00e531b0ef&sig=3052a2dc5b32f16a) |
-| ResolveMath | OpenKey | [Obter Chave](https://bridge.magnociqueira.com.br/github/claim?t=baldavengerofx&tmpl=c60ebcca-5ceb-41c8-94ab-294ad70a76b2&sig=a29898eeebba5cca) |
-| ResolveMathxtra | OpenKey | [Obter Chave](https://bridge.magnociqueira.com.br/github/claim?t=baldavengerofx&tmpl=30be0b1a-da63-48da-b1fd-f3525654ebac&sig=93c6b132cd36df08) |
-| Scan | OpenKey | [Obter Chave](https://bridge.magnociqueira.com.br/github/claim?t=baldavengerofx&tmpl=f64c0dce-fcca-48f0-83a5-e3ef8dc6b565&sig=21a036b7e677ae07) |
-| SoftClip | OpenKey | [Obter Chave](https://bridge.magnociqueira.com.br/github/claim?t=baldavengerofx&tmpl=e31e7e72-ec9b-4558-8d92-6ce14c80693e&sig=42e9d4a461a0265c) |
+| VideoGrade | OpenKey | [Obter Chave](https://bridge.mcnexus.app/github/claim?t=baldavengerofx&tmpl=76bda215-5c6b-4a80-b35d-de4942ee0be6&sig=14aabec3a222872e) |
+| HueConverge | OpenKey | [Obter Chave](https://bridge.mcnexus.app/github/claim?t=baldavengerofx&tmpl=c1ec264e-ccf9-4c9a-bfe0-180877bb3b2d&sig=ee04aca36d7d28ae) |
+| FilmGrade | OpenKey | [Obter Chave](https://bridge.mcnexus.app/github/claim?t=baldavengerofx&tmpl=a5b1c083-a666-44fa-8948-12a94768ec9e&sig=ab4bb6e904a42a34) |
+| FreqSep | OpenKey | [Obter Chave](https://bridge.mcnexus.app/github/claim?t=baldavengerofx&tmpl=61e768d4-4132-4bbb-ad5b-53cccc54b49f&sig=a82373ddfc7a19f8) |
+| FreqEQ | OpenKey | [Obter Chave](https://bridge.mcnexus.app/github/claim?t=baldavengerofx&tmpl=c9bf68b5-ec7d-4b71-aa40-a9f19673adac&sig=929fab384d2224c8) |
+| Matrix | OpenKey | [Obter Chave](https://bridge.mcnexus.app/github/claim?t=baldavengerofx&tmpl=79a22a0d-e988-495b-a319-d21bad22eb94&sig=da5e810a0191e9a0) |
+| Qualifier | OpenKey | [Obter Chave](https://bridge.mcnexus.app/github/claim?t=baldavengerofx&tmpl=cc82944c-7b63-4a31-9618-43fda25d5f6f&sig=8c678dfce1b070e3) |
+| Replace | OpenKey | [Obter Chave](https://bridge.mcnexus.app/github/claim?t=baldavengerofx&tmpl=002ef62d-b23b-4f32-89a3-db00e531b0ef&sig=3052a2dc5b32f16a) |
+| ResolveMath | OpenKey | [Obter Chave](https://bridge.mcnexus.app/github/claim?t=baldavengerofx&tmpl=c60ebcca-5ceb-41c8-94ab-294ad70a76b2&sig=a29898eeebba5cca) |
+| ResolveMathxtra | OpenKey | [Obter Chave](https://bridge.mcnexus.app/github/claim?t=baldavengerofx&tmpl=30be0b1a-da63-48da-b1fd-f3525654ebac&sig=93c6b132cd36df08) |
+| Scan | OpenKey | [Obter Chave](https://bridge.mcnexus.app/github/claim?t=baldavengerofx&tmpl=f64c0dce-fcca-48f0-83a5-e3ef8dc6b565&sig=21a036b7e677ae07) |
+| SoftClip | OpenKey | [Obter Chave](https://bridge.mcnexus.app/github/claim?t=baldavengerofx&tmpl=e31e7e72-ec9b-4558-8d92-6ce14c80693e&sig=42e9d4a461a0265c) |
 
 Mais plugins da suíte original poderão ser adicionados em releases futuros.
 
-[Torne-se um apoiador dos builds BaldavengerOFX](https://bridge.magnociqueira.com.br/commerce/start?t=baldavengerofx&offer=baldavenger-ofx-supporter)
+[Torne-se um apoiador dos builds BaldavengerOFX](https://bridge.mcnexus.app/commerce/start?t=baldavengerofx&offer=baldavenger-ofx-supporter)
 
 ## Plataformas
 
@@ -84,7 +84,7 @@ exigem compras separadas de suporte. O pagamento não compra o software, não
 restringe redistribuição, não adiciona recursos exclusivos e não representa
 suporte oficial de Paul Dore.
 
-[Torne-se um apoiador dos builds BaldavengerOFX](https://bridge.magnociqueira.com.br/commerce/start?t=baldavengerofx&offer=baldavenger-ofx-supporter)
+[Torne-se um apoiador dos builds BaldavengerOFX](https://bridge.mcnexus.app/commerce/start?t=baldavengerofx&offer=baldavenger-ofx-supporter)
 
 Estes builds e o suporte relacionado são mantidos de forma independente por
 **Magno Ciqueira**. A distribuição e as chaves técnicas utilizam os serviços
@@ -116,4 +116,4 @@ https://github.com/baldavenger/BaldavengerOFX
 
 Distribuição Nexus e integração MCNexus/OpenKey:  
 Magno Ciqueira  
-https://github.com/ciqueira/MCNexus
+https://mcnexus.app
